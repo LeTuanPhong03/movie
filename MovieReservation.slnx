@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MovieReservation.Api/MovieReservation.Api.csproj" />
+    <Project Path="src/MovieReservation.Application/MovieReservation.Application.csproj" />
+    <Project Path="src/MovieReservation.Domain/MovieReservation.Domain.csproj" />
+    <Project Path="src/MovieReservation.Infrastructure/MovieReservation.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MovieReservation.IntegrationTests/MovieReservation.IntegrationTests.csproj" />
+    <Project Path="tests/MovieReservation.UnitTests/MovieReservation.UnitTests.csproj" />
+  </Folder>
+</Solution>

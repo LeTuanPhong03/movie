@@ -1,0 +1,3 @@
+# lý do tách Seat và ShowtimeSeat, lý do lưu TotalPrice
+1. Seat là ghế cứng của phòng. Nếu lưu trạng thái vào Seat, đặt ghế A5 suất 18:00 sẽ làm A5 bị khóa ở mọi suất khác. Vì vậy trạng thái được lưu ở ShowtimeSeat, mỗi dòng là một ghế trong một suất.
+2. TotalPrice giống như 1 snapShot để sau này tham chiếu lại giá mà không ảnh hưởng price khi admin đổi giá vé và báo cáo doanh thu vẫn đúng với số tiền khách đã trả thật.
