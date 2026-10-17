@@ -8,9 +8,10 @@
 **Cập nhật lần cuối:** 17/10/2026
 
 **Bước tiếp theo:**
-1. **Bài 4, gần xong:** Postgres đã chạy. Còn: thử nghiệm volume (tạo bảng test → `down` → `up` → vẫn còn dữ liệu), xóa bảng test, commit `docker-compose.yml`
-2. **Bài 5:** EF Core DbContext + migration đầu tiên (7 entity thành 7 bảng)
+1. **Commit** Bài 5 (DbContext, connection string, migration `InitialCreate`)
+2. **Bài 6:** Configurations (Fluent API): thêm khóa ngoại, unique `(ShowtimeId, SeatId)`, lưu enum dạng chữ, giới hạn độ dài chuỗi → migration thứ 2
 3. Sau đó: test đầu tiên với Testcontainers
+3. Sau đó: cấu hình bảng (unique index, độ dài cột) → test đầu tiên với Testcontainers
 
 ## 📅 Nhật ký
 
@@ -24,6 +25,9 @@
 | 17/10 | Bài 3: sửa review | Sửa 6/7 điểm; tự chọn tên `UserRole.Customer` (tốt hơn gợi ý); học warning CS8618 và cách `= string.Empty` | Sót `ShowTimeId` ở Reservation; dùng Ctrl+Shift+F để rà tên |
 | 17/10 | Bài 3: xong ✅ | Build sạch 0 warning; `Genre` chọn `string` (cách A); commit `3b3cfcc` | Từng đổi `Genre` sang `int` để tắt cảnh báo → bài học: sửa cho đúng nghĩa, không sửa cho hết cảnh báo |
 | 17/10 | Bài 4: Docker | Hiểu image / container / volume (laptop và ổ cứng gắn ngoài); viết `docker-compose.yml`; Postgres 17 chạy được | Từng nghĩ volume là "cache/backup", thật ra là nơi lưu dữ liệu thật, không phải bản sao |
+| 17/10 | Bài 4: xong ✅ | Tự kiểm chứng volume giữ dữ liệu sau `down`/`up`; commit `cb728c1` | |
+| 17/10 | Bài 5 phần 1 | Hiểu ORM / DbContext / DbSet / migration; cài EF Core 10 + Npgsql + `dotnet ef`; tự viết `AppDbContext` đủ 7 DbSet | Đặt tên kệ `ReservationSeats` cho `ShowtimeSeat` (tên DbSet = tên bảng) |
+| 17/10 | Bài 5 phần 2: xong ✅ | Connection string, `AddDbContext` (DI), migration `InitialCreate`, 7 bảng trong Postgres; tự giải thích đúng `__EFMigrationsHistory` | Phát hiện qua `\d`: **chưa có khóa ngoại, chưa có unique index**, Status lưu dạng số → học ở Bài 6 |
 
 ## 🎤 Câu phỏng vấn đã luyện
 
@@ -36,4 +40,8 @@
 - Warning CS8618 nghĩa là gì, sửa thế nào? (property không-null nhưng chưa gán; `= string.Empty` hoặc `required`)
 - Image, container, volume khác nhau thế nào? Vì sao không dùng `down -v` trên server?
 - Vì sao không để mật khẩu trong code? (repo public ai cũng đọc được, bot quét GitHub; dùng biến môi trường)
+- ORM / EF Core là gì? DbContext và migration là gì?
+- Vì sao DbContext nằm ở Infrastructure chứ không ở Domain?
+- Bảng `__EFMigrationsHistory` để làm gì? (ghi migration nào đã áp, để `update` chỉ chạy cái chưa áp)
+- Dependency Injection là gì? (đăng ký 1 lần, framework tự tạo và đưa cho nơi cần)
 - Vì sao không có cột `ExpiredAt`? (trùng với `ExpiresAt`; chỉ lưu thời điểm của sự kiện không đoán trước được)
