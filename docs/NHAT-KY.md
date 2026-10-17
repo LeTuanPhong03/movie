@@ -5,11 +5,11 @@
 
 ## 📍 Hôm nay học gì
 
-**Cập nhật lần cuối:** 17/10/2026
+**Cập nhật lần cuối:** 17/10/2026 (phiên 2)
 
 **Bước tiếp theo:**
-1. **Bài 8 — Auth (việc của 19/10):** lấy lại Register/Login JWT từ Project 1, role `Admin`/`Customer`, seed admin từ config, policy `AdminOnly`, nút Authorize trên Swagger
-2. **Đầu buổi:** ôn các câu ⚠️, ưu tiên: OnDelete (SetNull vs Restrict) và "vì sao vẫn cần unique khi code đã kiểm tra" (race condition)
+1. **Bài 8 — Auth (việc của 19/10, làm sớm):** đang ở bước 3/8 (cài BCrypt, viết `BCryptPasswordHasher` ở Infrastructure). Lộ trình: (1) AuthN/AuthZ, JWT ✅ → (2) `RegisterCommand` trả `AuthResponse` → (3) `IPasswordHasher` + BCrypt → (4) `ITokenService` + entity `RefreshToken` + migration → (5) handler Register/Login trả token → (6) `RefreshTokenCommand` rotation (xóa token cũ) → (7) `AddAuthentication` + `AdminOnly` + Swagger → (8) seed admin, kiểm tra 401/403
+2. Tham khảo code Project 1 tại `D:\hoc\HocCS\E-Commerce-API\Ecommerce` (JwtTokenGenerator, BCryptPasswordHasher, LoginCommandHandler) — tái dùng có chỉnh, không copy nguyên xi
 
 ## 🔁 Cách ôn câu phỏng vấn
 
@@ -18,6 +18,7 @@
 - Câu trả lời sai hoặc ấp úng thì đánh dấu ⚠️ cạnh câu đó để hỏi lại hôm sau. Trả lời tốt 2 lần liền thì đánh dấu ✅.
 - Gợi ý trong ngoặc chỉ để tự kiểm tra, **không học thuộc**.
 - 17/10: ôn lần đầu cuối buổi. 3 câu: index leftmost prefix đúng; OnDelete và unique-vs-race còn thiếu ý (⚠️).
+- 17/10 (phiên 2, đầu buổi): OnDelete — đặt SetNull **đúng chỗ** lần đầu, còn thiếu ý "thực tế không xóa đơn mà chuyển Cancelled". Unique-vs-race — nêu đúng race condition. Cả hai đúng lần 1, đúng thêm 1 lần nữa là ✅.
 
 ## 📅 Nhật ký
 
@@ -42,6 +43,13 @@
 | 17/10 | Bài 6: xong ✅ | Migration `AddConfigurations` đã apply; `\d "ShowtimeSeats"` có FK + unique; thử insert trùng tên phòng → lỗi `IX_Theaters_Name`, ghế vào phòng 999 → lỗi `FK_Seats_Theaters_TheaterId`. Commit `3294dce` | Lỡ `git commit -am` thành 2 commit (`-a` bỏ qua file mới) → gộp bằng `git reset --soft HEAD~2`. Thói quen: `git add .` → `git status` → commit |
 | 17/10 | Bài 7: Testcontainers | Hiểu vì sao không dùng EF InMemory (không có unique/FK/lock) và không dùng chung DB dev; `async`/`await`, `IAsyncLifetime`; tự viết 2 assert (`GetPendingMigrationsAsync` rỗng, `ShowtimeSeats` có 0 dòng). Test xanh lần đầu (~25s) | |
 | 17/10 | Bài 7: xong ✅ | Thử làm test đỏ cố ý rồi sửa lại; commit `8f79c03`; **push lần đầu lên GitHub**. Giai đoạn 0 xong sớm 1 ngày | |
+| 17/10 | Bài 8 bước 1: AuthN/AuthZ | Phân biệt Authentication (là ai → 401) và Authorization (được làm gì → 403); JWT = header.payload.signature, payload ai cũng đọc được, chữ ký chống sửa | Chỉ trả lời 403 mà quên trường hợp **không gửi token → 401** ⚠️ |
+| 17/10 | Bài 8 bước 2: RegisterCommand | Cài MediatR 14.2.0; viết `RegisterCommand` dạng `record`; tự quyết **không cho chọn Role** khi đăng ký (Admin chỉ seed hoặc do admin khác cấp) | Lần đầu cho command trả về entity `User` → lộ `PasswordHash` ra API, phải trả `int` hoặc DTO |
+| 17/10 | Bài 8: chốt luồng token | Người học quyết định làm **luồng chuẩn**: Register/Login trả access + refresh token, `/auth/refresh` cấp mới và xóa token cũ. Hiểu vì sao cần refresh token (access token không thu hồi được → hạn ngắn; refresh token lưu DB → thu hồi được) | |
+| 17/10 | Bài 8 bước 2–3: review | `IPasswordHasher` đạt ngay; `AuthResponse` dùng `DateTime` (khớp các entity, Npgsql từ chối DateTime không phải UTC); hiểu tham số của positional record = property public → PascalCase | Lỗi chính tả lặp lại (`acessToken`, `comfirmPassword`) ⚠️; bọc `AuthRequest` trong `RegisterCommand` → JSON lồng 2 tầng, tên "AuthRequest" không hợp với Login |
+| 17/10 | Bài 8 bước 2: xong ✅ | Sửa hết: xóa `AuthRequest`, command phẳng `(Email, Password, ConfirmPassword)`; đổi `ExpiresAt` → `AccessTokenExpiresAt` sau khi tự phát hiện tên mơ hồ (access và refresh có hạn khác nhau); build 0 warning | |
+| 17/10 | Bài 8: thêm FullName | Người học tự đề xuất thêm tên; chốt `FullName` = tên hiển thị (trùng được, không unique), login vẫn bằng email. Học chuỗi việc khi đổi entity: Domain → Configuration → migration → Command | |
+| 17/10 | Bài 8: FullName xong ✅ | Migration `AddUserFullName` đã apply, `\d "Users"` có `FullName varchar(100) not null default ''`. Học: EF suy NOT NULL từ `string` (không `?`); `defaultValue` để migration chạy được khi bảng đã có dữ liệu; mở psql bằng `docker exec -it movie-db psql ...` | Gõ thiếu `src/` trong `--project` → lỗi "Unable to retrieve project metadata" |
 
 ## 🎤 Câu phỏng vấn đã luyện
 
@@ -62,10 +70,19 @@
 - Fluent API configuration là gì? Vì sao không dùng attribute `[MaxLength]` trong Domain?
 - Vì sao unique phải là cặp `(ShowtimeId, SeatId)` chứ không chỉ `SeatId`? (chỉ `SeatId` thì mỗi ghế chỉ được nằm trong 1 suất duy nhất)
 - `virtual` / `override` / `base` khác nhau thế nào?
-- ⚠️ (ôn 17/10: vẫn lẫn) Cascade, Restrict, SetNull khác nhau thế nào? Reservation dùng gì, SetNull nằm ở bảng nào? (OnDelete mô tả chuyện xảy ra với **con**; SetNull ở `ShowtimeSeat.ReservationId` vì cột đó cho phép null)
+- ⚠️ (ôn 17/10: vẫn lẫn → phiên 2: đúng chỗ SetNull, thiếu ý không xóa đơn) Cascade, Restrict, SetNull khác nhau thế nào? Reservation dùng gì, SetNull nằm ở bảng nào? (OnDelete mô tả chuyện xảy ra với **con**; SetNull ở `ShowtimeSeat.ReservationId` vì cột đó cho phép null; Restrict ở `Reservation.UserId/ShowtimeId` = không cho xóa User/Showtime đã có đơn; thực tế **không xóa đơn**, chỉ chuyển `Cancelled` để giữ doanh thu và nhả ghế đúng cách)
 - Index là gì? Vì sao không đánh index lên mọi cột? (đọc nhanh nhưng ghi chậm, tốn chỗ)
 - Unique index khác index thường thế nào? Khi nào unique không đủ? (luật khoảng thời gian, chồng lấn)
 - ⚠️ (ôn 17/10: đúng lần 1, đúng thêm 1 lần nữa là ✅) Index `(A, B)` có giúp `WHERE B = ...` không? (không — leftmost prefix)
-- ⚠️ (ôn 17/10: thiếu ý race condition) Vì sao code đã kiểm tra trùng rồi mà DB vẫn cần unique? (2 request cùng lúc đều kiểm tra "chưa có" → race condition)
+- ⚠️ (ôn 17/10: thiếu ý race condition → phiên 2: đúng lần 1) Vì sao code đã kiểm tra trùng rồi mà DB vẫn cần unique? (2 request cùng lúc đều kiểm tra "chưa có" → race condition)
 - Integration test khác unit test thế nào? Vì sao dùng Testcontainers mà không dùng EF InMemory? (InMemory không có unique, FK, lock → test concurrency luôn pass dù code sai)
 - Vì sao tên test nên dài, mô tả rõ? (test đỏ thì đọc tên là biết luật nào bị vỡ, không cần mở code)
+- ⚠️ (17/10: quên vế 401) Authentication khác Authorization thế nào? Khi nào trả 401, khi nào 403? (không có token/token sai → 401; có token hợp lệ nhưng không đủ quyền → 403)
+- JWT gồm mấy phần? Vì sao không để `PasswordHash` (hay dữ liệu nhạy cảm) trong payload? (payload chỉ là base64, ai cầm token cũng đọc được; chữ ký đã chứng minh danh tính nên request thường không cần hash)
+- Vì sao API đăng ký không cho client gửi `Role`? (client tự gửi `Admin` là leo quyền — privilege escalation; Admin chỉ seed hoặc do admin cấp)
+- Vì sao không trả entity ra ngoài API? (lộ cột nhạy cảm như `PasswordHash`, client bị buộc chặt vào cấu trúc DB)
+- Vì sao cần refresh token? Sao không cho access token sống 30 ngày luôn? (access token không thu hồi được vì server không lưu; refresh token lưu DB nên thu hồi được)
+- Refresh token rotation là gì? (mỗi lần refresh thì cấp token mới và hủy token cũ → token bị lộ chỉ dùng được 1 lần)
+- Vì sao hash mật khẩu bằng BCrypt mà không dùng SHA-256? (SHA-256 quá nhanh → brute-force hàng tỷ lần/giây; BCrypt cố ý chậm, có work factor tăng dần được, salt nằm sẵn trong hash)
+- ⚠️ (17/10: nêu được "cái gì", thiếu "vì sao") Thêm cột NOT NULL vào bảng đã có dữ liệu thì sao? Vì sao EF sinh `defaultValue: ""`? (không có default thì các dòng cũ thành NULL → vi phạm NOT NULL → Postgres từ chối, migration hỏng)
+- EF quyết định cột NULL hay NOT NULL dựa vào đâu? (`string` → NOT NULL, `string?` → NULL, nhờ nullable reference types) NOT NULL có chặn được chuỗi rỗng `""` không? (không → cần validator `NotEmpty`)

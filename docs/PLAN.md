@@ -94,9 +94,12 @@ GHẾ  (ShowtimeSeat): Available → Held → Booked
 
 ### T2 19/10 — Auth
 - [ ] Lấy lại Register/Login JWT từ Project 1
-- [ ] Hai role `Admin` và `User`, seed 1 admin từ config (không hard-code password)
+- [ ] Register và Login đều trả **access token + refresh token** (quyết định 17/10: làm luồng chuẩn, không cắt)
+- [ ] Bảng `RefreshTokens`; `RefreshTokenCommand` cấp token mới và **xóa token cũ** (rotation)
+- [ ] Hai role `Admin` và `Customer`, seed 1 admin từ config (không hard-code password)
 - [ ] Policy `AdminOnly`, Swagger có nút Authorize
-- **Xong khi:** login admin lấy được token, gọi endpoint admin với token User thì nhận **403**.
+- **Xong khi:** login admin lấy được token, gọi endpoint admin với token Customer thì nhận **403**; refresh trả token mới, dùng lại refresh token cũ thì bị từ chối.
+- ⏱️ Thêm refresh token tốn khoảng +½–1 ngày → nếu tràn thì dùng Buffer #1 (25/10).
 
 ### T3 20/10 — Theater + Movie
 - [ ] `CreateTheaterCommand` kèm sơ đồ ghế (rows, seatsPerRow, tự sinh `Seat`)
