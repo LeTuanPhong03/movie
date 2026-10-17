@@ -8,13 +8,9 @@
 **Cập nhật lần cuối:** 17/10/2026
 
 **Bước tiếp theo:**
-1. **Bài 6:** Configurations (Fluent API) trong `Infrastructure/Persistence/Configurations/` để sửa 3 vấn đề thấy qua `\d "ShowtimeSeats"`:
-   - chưa có **khóa ngoại** (entity chỉ có `int SeatId`, chưa có navigation property)
-   - chưa có **unique `(ShowtimeId, SeatId)`**, nên DB cho 2 dòng cùng ghế cùng suất
-   - `Status` lưu dạng **số**, nên đổi sang lưu chữ
-   - thêm giới hạn độ dài chuỗi, unique `Email` → migration thứ 2
-2. Sau đó: test đầu tiên với Testcontainers
-3. **Cuối mỗi buổi:** ôn 2–3 câu trong kho phỏng vấn (xem cách ôn bên dưới)
+1. **Bài 7:** integration test đầu tiên bằng **Testcontainers**: khởi động Postgres trong test, chạy migration, assert bảng tồn tại (việc còn lại của ngày 18/10 trong PLAN)
+2. Sau đó: `git push` lần đầu lên GitHub (remote `origin` đã có, nhánh `main` chưa push)
+3. **Cuối mỗi buổi:** ôn 2–3 câu trong kho phỏng vấn, **ưu tiên 2 câu ⚠️**
 
 ## 🔁 Cách ôn câu phỏng vấn
 
@@ -22,7 +18,7 @@
 - Cuối mỗi buổi, mentor hỏi **2–3 câu ngẫu nhiên** (ưu tiên câu cũ). Trả lời bằng lời của mình, không nhìn tài liệu.
 - Câu trả lời sai hoặc ấp úng thì đánh dấu ⚠️ cạnh câu đó để hỏi lại hôm sau. Trả lời tốt 2 lần liền thì đánh dấu ✅.
 - Gợi ý trong ngoặc chỉ để tự kiểm tra, **không học thuộc**.
-- Chưa ôn buổi nào (tính đến 17/10).
+- 17/10: ôn lần đầu sau Bài 6 (xem các câu ⚠️ bên dưới).
 
 ## 📅 Nhật ký
 
@@ -40,6 +36,11 @@
 | 17/10 | Bài 5 phần 1 | Hiểu ORM / DbContext / DbSet / migration; cài EF Core 10 + Npgsql + `dotnet ef`; tự viết `AppDbContext` đủ 7 DbSet | Đặt tên kệ `ReservationSeats` cho `ShowtimeSeat` (tên DbSet = tên bảng) |
 | 17/10 | Bài 5 phần 2: xong ✅ | Connection string, `AddDbContext` (DI), migration `InitialCreate`, 7 bảng trong Postgres; tự giải thích đúng `__EFMigrationsHistory` | Phát hiện qua `\d`: **chưa có khóa ngoại, chưa có unique index**, Status lưu dạng số → học ở Bài 6 |
 | 17/10 | Commit Bài 5 | Commit `8fe5ded` | |
+| 17/10 | Bài 6: Fluent API | Hiểu configuration = "nội quy" của bảng, đặt ở Infrastructure để Domain sạch; tự viết `ShowtimeSeatConfiguration` (lưu Status dạng chữ, 3 khóa ngoại, unique `(ShowtimeId, SeatId)`); `ApplyConfigurationsFromAssembly`; hiểu `virtual` / `override` / `base` | Unique chỉ `SeatId` sẽ làm ghế không bán được cho suất khác (không phải "ghi đè") |
+| 17/10 | Bài 6: warning NuGet | Sửa MSB3277 (2 phiên bản EF Core) bằng cách ghi rõ EF Core 10.0.13 trong Infrastructure; build 0 warning | |
+| 17/10 | Bài 6: config còn lại | Mentor viết 6 config còn lại theo yêu cầu. Học `OnDelete`: Cascade / Restrict / SetNull và vì sao Reservation dùng Restrict (giữ lịch sử doanh thu) | Gắn SetNull nhầm vào bảng Reservation (đúng là ở `ShowtimeSeat.ReservationId`) ⚠️ |
+| 17/10 | Bài 6: index | Index = mục lục đã sắp xếp; đọc nhanh, ghi chậm; unique = index + luật; unique mạnh khi luật là "bằng nhau", luật khoảng thời gian (chồng lấn suất chiếu) phải kiểm tra bằng code. Tự quyết **không** unique `Showtimes(TheaterId, StartAt)`. Hiểu **leftmost prefix**, giải thích được vì sao EF không tạo index riêng cho `ShowtimeId` | Lúc đầu nói index `(TheaterId, StartAt)` giúp được `WHERE StartAt > now()` ⚠️ (sau đó đã trả lời đúng bài `Seats`) |
+| 17/10 | Bài 6: xong ✅ | Migration `AddConfigurations` đã apply; `\d "ShowtimeSeats"` có FK + unique; thử insert trùng tên phòng → lỗi `IX_Theaters_Name`, ghế vào phòng 999 → lỗi `FK_Seats_Theaters_TheaterId`. Commit `3294dce` | Lỡ `git commit -am` thành 2 commit (`-a` bỏ qua file mới) → gộp bằng `git reset --soft HEAD~2`. Thói quen: `git add .` → `git status` → commit |
 
 ## 🎤 Câu phỏng vấn đã luyện
 
@@ -57,3 +58,11 @@
 - Bảng `__EFMigrationsHistory` để làm gì? (ghi migration nào đã áp, để `update` chỉ chạy cái chưa áp)
 - Dependency Injection là gì? (đăng ký 1 lần, framework tự tạo và đưa cho nơi cần)
 - Vì sao không có cột `ExpiredAt`? (trùng với `ExpiresAt`; chỉ lưu thời điểm của sự kiện không đoán trước được)
+- Fluent API configuration là gì? Vì sao không dùng attribute `[MaxLength]` trong Domain?
+- Vì sao unique phải là cặp `(ShowtimeId, SeatId)` chứ không chỉ `SeatId`? (chỉ `SeatId` thì mỗi ghế chỉ được nằm trong 1 suất duy nhất)
+- `virtual` / `override` / `base` khác nhau thế nào?
+- ⚠️ Cascade, Restrict, SetNull khác nhau thế nào? Reservation dùng gì, SetNull nằm ở bảng nào? (OnDelete mô tả chuyện xảy ra với **con**; SetNull ở `ShowtimeSeat.ReservationId` vì cột đó cho phép null)
+- Index là gì? Vì sao không đánh index lên mọi cột? (đọc nhanh nhưng ghi chậm, tốn chỗ)
+- Unique index khác index thường thế nào? Khi nào unique không đủ? (luật khoảng thời gian, chồng lấn)
+- ⚠️ Index `(A, B)` có giúp `WHERE B = ...` không? (không — leftmost prefix)
+- Vì sao code đã kiểm tra trùng rồi mà DB vẫn cần unique? (2 request cùng lúc đều kiểm tra "chưa có" → race condition)
