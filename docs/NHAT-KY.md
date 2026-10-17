@@ -8,7 +8,7 @@
 **Cập nhật lần cuối:** 17/10/2026 (phiên 2)
 
 **Bước tiếp theo:**
-1. **Bài 8 — Auth (việc của 19/10, làm sớm):** đang ở bước 3/8 (cài BCrypt, viết `BCryptPasswordHasher` ở Infrastructure). Lộ trình: (1) AuthN/AuthZ, JWT ✅ → (2) `RegisterCommand` trả `AuthResponse` → (3) `IPasswordHasher` + BCrypt → (4) `ITokenService` + entity `RefreshToken` + migration → (5) handler Register/Login trả token → (6) `RefreshTokenCommand` rotation (xóa token cũ) → (7) `AddAuthentication` + `AdminOnly` + Swagger → (8) seed admin, kiểm tra 401/403
+1. **Bài 8 — Auth (việc của 19/10, làm sớm):** đang ở bước 4b/8 — viết `ITokenService` (Application) + `JwtTokenService` (Infrastructure): sinh access token JWT (claim Id, Email, FullName, Role), sinh refresh token ngẫu nhiên 64 byte, hash SHA-256; cấu hình `Jwt` (Key/Issuer/Audience/thời hạn) trong appsettings, Key lấy từ user-secrets/biến môi trường. Bước 4a (bảng `RefreshTokens`) đã xong. Lộ trình: (1) AuthN/AuthZ, JWT ✅ → (2) `RegisterCommand` trả `AuthResponse` → (3) `IPasswordHasher` + BCrypt → (4) `ITokenService` + entity `RefreshToken` + migration → (5) handler Register/Login trả token → (6) `RefreshTokenCommand` rotation (xóa token cũ) → (7) `AddAuthentication` + `AdminOnly` + Swagger → (8) seed admin, kiểm tra 401/403
 2. Tham khảo code Project 1 tại `D:\hoc\HocCS\E-Commerce-API\Ecommerce` (JwtTokenGenerator, BCryptPasswordHasher, LoginCommandHandler) — tái dùng có chỉnh, không copy nguyên xi
 
 ## 🔁 Cách ôn câu phỏng vấn
@@ -50,6 +50,12 @@
 | 17/10 | Bài 8 bước 2: xong ✅ | Sửa hết: xóa `AuthRequest`, command phẳng `(Email, Password, ConfirmPassword)`; đổi `ExpiresAt` → `AccessTokenExpiresAt` sau khi tự phát hiện tên mơ hồ (access và refresh có hạn khác nhau); build 0 warning | |
 | 17/10 | Bài 8: thêm FullName | Người học tự đề xuất thêm tên; chốt `FullName` = tên hiển thị (trùng được, không unique), login vẫn bằng email. Học chuỗi việc khi đổi entity: Domain → Configuration → migration → Command | |
 | 17/10 | Bài 8: FullName xong ✅ | Migration `AddUserFullName` đã apply, `\d "Users"` có `FullName varchar(100) not null default ''`. Học: EF suy NOT NULL từ `string` (không `?`); `defaultValue` để migration chạy được khi bảng đã có dữ liệu; mở psql bằng `docker exec -it movie-db psql ...` | Gõ thiếu `src/` trong `--project` → lỗi "Unable to retrieve project metadata" |
+| 17/10 | Commit bước 2 + FullName | Commit `d1864e7`. Thảo luận: thư viện không "bắt buộc" cũng không "tối ưu nhất", chọn theo tiêu chí. MediatR (có thể tự viết, từ v13 cần license) và BCrypt (OWASP xếp Argon2id cao hơn, BCrypt vẫn chấp nhận được, giới hạn 72 byte) | |
+| 17/10 | Bài 8 bước 3: xong ✅ | Cài BCrypt.Net-Next 4.2.0 vào Infrastructure; tự viết `BCryptPasswordHasher : IPasswordHasher`, build 0 warning | Chưa trả lời được "vì sao BCrypt ở Infrastructure" ⚠️ (Application chỉ khai báo *cần gì*, Infrastructure quyết định *làm bằng gì*) |
+| 17/10 | Bài 8 bước 4: thiết kế RefreshTokens | Đặt đúng `ITokenService` (Application) / `JwtTokenService` + package JWT (Infrastructure); chọn Cascade khi xóa User, index cột token. Học: lưu **hash SHA-256** của token (token đã ngẫu nhiên đủ dài nên SHA-256 đủ, không cần BCrypt; BCrypt có salt nên không tra cứu được) | Thiếu cột `UserId`, `ExpiresAt`, `CreatedAt` ⚠️; nhầm "chuỗi ngẫu nhiên" (cách sinh) với "lưu token hay hash" (cách lưu) |
+| 17/10 | Bài 8 bước 4a: review entity | Tự viết entity + config + DbSet, có Cascade và unique; **xin review trước khi migration** (thói quen tốt) | `UserId` để `string` trong khi `User.Id` là `int` ⚠️ (kiểu khóa ngoại phải khớp khóa chính); tên file `efreshTokenConfiguration.cs`; thiếu `HasMaxLength(64)`; tên `Token` thay vì `TokenHash` → **đã sửa hết** sau 1 lượt review |
+| 17/10 | Bài 8 bước 4a: migration | Tạo `AddRefreshTokens`; đọc file thấy 2 `CreateIndex` (unique `TokenHash` tự viết + `UserId` do EF tự tạo cho khóa ngoại) và `onDelete: Cascade`. Học **convention** của EF (`Id` → khóa chính tự tăng, không cần `HasKey`) | |
+| 17/10 | Bài 8 bước 4a: xong ✅ | `database update` thành công, `\d "RefreshTokens"` đủ 5 cột (`TokenHash varchar(64)`, thời gian `timestamptz`); 4 migration trong `__EFMigrationsHistory` | Docker Desktop hay tắt sau khi tắt máy → bật "Start when you sign in" |
 
 ## 🎤 Câu phỏng vấn đã luyện
 
@@ -86,3 +92,6 @@
 - Vì sao hash mật khẩu bằng BCrypt mà không dùng SHA-256? (SHA-256 quá nhanh → brute-force hàng tỷ lần/giây; BCrypt cố ý chậm, có work factor tăng dần được, salt nằm sẵn trong hash)
 - ⚠️ (17/10: nêu được "cái gì", thiếu "vì sao") Thêm cột NOT NULL vào bảng đã có dữ liệu thì sao? Vì sao EF sinh `defaultValue: ""`? (không có default thì các dòng cũ thành NULL → vi phạm NOT NULL → Postgres từ chối, migration hỏng)
 - EF quyết định cột NULL hay NOT NULL dựa vào đâu? (`string` → NOT NULL, `string?` → NULL, nhờ nullable reference types) NOT NULL có chặn được chuỗi rỗng `""` không? (không → cần validator `NotEmpty`)
+- Vì sao chọn MediatR / BCrypt? Có lựa chọn nào khác? (MediatR: tự gọi handler, `Mediator` source-generated, Wolverine; hash: Argon2id được OWASP ưu tiên, PBKDF2 có sẵn trong .NET; chọn BCrypt vì phổ biến, salt sẵn, đủ an toàn)
+- ⚠️ (17/10: chưa trả lời được) Vì sao thư viện BCrypt / JWT nằm ở Infrastructure mà không ở Application? (Application chỉ khai báo interface — *cần gì*; Infrastructure quyết định *làm bằng gì*; đổi thư viện chỉ sửa Infrastructure, Application không biết)
+- Vì sao lưu hash của refresh token chứ không lưu nguyên chuỗi? Sao hash bằng SHA-256 mà mật khẩu lại phải BCrypt? (DB lộ thì hacker không dùng được token; token ngẫu nhiên 64 byte không đoán được nên hash nhanh vẫn an toàn, còn mật khẩu do người đặt nên dễ đoán → cần hash chậm; BCrypt có salt ngẫu nhiên nên không `WHERE TokenHash = ...` được)
