@@ -8,10 +8,8 @@
 **Cập nhật lần cuối:** 17/10/2026
 
 **Bước tiếp theo:**
-1. Thử làm test **đỏ** cố ý (đổi `Assert.Equal(0, ...)` thành `1`) để thấy test fail trông thế nào, rồi sửa lại
-2. Commit Bài 7, rồi `git push` lần đầu lên GitHub (remote `origin` đã có, nhánh `main` chưa push) → xong ngày 18/10
-3. Sau đó: **19/10 Auth** (Register/Login JWT, role Admin/Customer, policy `AdminOnly`)
-4. **Cuối mỗi buổi:** ôn 2–3 câu trong kho phỏng vấn, **ưu tiên 2 câu ⚠️**
+1. **Bài 8 — Auth (việc của 19/10):** lấy lại Register/Login JWT từ Project 1, role `Admin`/`Customer`, seed admin từ config, policy `AdminOnly`, nút Authorize trên Swagger
+2. **Đầu buổi:** ôn các câu ⚠️, ưu tiên: OnDelete (SetNull vs Restrict) và "vì sao vẫn cần unique khi code đã kiểm tra" (race condition)
 
 ## 🔁 Cách ôn câu phỏng vấn
 
@@ -19,7 +17,7 @@
 - Cuối mỗi buổi, mentor hỏi **2–3 câu ngẫu nhiên** (ưu tiên câu cũ). Trả lời bằng lời của mình, không nhìn tài liệu.
 - Câu trả lời sai hoặc ấp úng thì đánh dấu ⚠️ cạnh câu đó để hỏi lại hôm sau. Trả lời tốt 2 lần liền thì đánh dấu ✅.
 - Gợi ý trong ngoặc chỉ để tự kiểm tra, **không học thuộc**.
-- 17/10: ôn lần đầu sau Bài 6 (xem các câu ⚠️ bên dưới).
+- 17/10: ôn lần đầu cuối buổi. 3 câu: index leftmost prefix đúng; OnDelete và unique-vs-race còn thiếu ý (⚠️).
 
 ## 📅 Nhật ký
 
@@ -43,6 +41,7 @@
 | 17/10 | Bài 6: index | Index = mục lục đã sắp xếp; đọc nhanh, ghi chậm; unique = index + luật; unique mạnh khi luật là "bằng nhau", luật khoảng thời gian (chồng lấn suất chiếu) phải kiểm tra bằng code. Tự quyết **không** unique `Showtimes(TheaterId, StartAt)`. Hiểu **leftmost prefix**, giải thích được vì sao EF không tạo index riêng cho `ShowtimeId` | Lúc đầu nói index `(TheaterId, StartAt)` giúp được `WHERE StartAt > now()` ⚠️ (sau đó đã trả lời đúng bài `Seats`) |
 | 17/10 | Bài 6: xong ✅ | Migration `AddConfigurations` đã apply; `\d "ShowtimeSeats"` có FK + unique; thử insert trùng tên phòng → lỗi `IX_Theaters_Name`, ghế vào phòng 999 → lỗi `FK_Seats_Theaters_TheaterId`. Commit `3294dce` | Lỡ `git commit -am` thành 2 commit (`-a` bỏ qua file mới) → gộp bằng `git reset --soft HEAD~2`. Thói quen: `git add .` → `git status` → commit |
 | 17/10 | Bài 7: Testcontainers | Hiểu vì sao không dùng EF InMemory (không có unique/FK/lock) và không dùng chung DB dev; `async`/`await`, `IAsyncLifetime`; tự viết 2 assert (`GetPendingMigrationsAsync` rỗng, `ShowtimeSeats` có 0 dòng). Test xanh lần đầu (~25s) | |
+| 17/10 | Bài 7: xong ✅ | Thử làm test đỏ cố ý rồi sửa lại; commit `8f79c03`; **push lần đầu lên GitHub**. Giai đoạn 0 xong sớm 1 ngày | |
 
 ## 🎤 Câu phỏng vấn đã luyện
 
@@ -63,10 +62,10 @@
 - Fluent API configuration là gì? Vì sao không dùng attribute `[MaxLength]` trong Domain?
 - Vì sao unique phải là cặp `(ShowtimeId, SeatId)` chứ không chỉ `SeatId`? (chỉ `SeatId` thì mỗi ghế chỉ được nằm trong 1 suất duy nhất)
 - `virtual` / `override` / `base` khác nhau thế nào?
-- ⚠️ Cascade, Restrict, SetNull khác nhau thế nào? Reservation dùng gì, SetNull nằm ở bảng nào? (OnDelete mô tả chuyện xảy ra với **con**; SetNull ở `ShowtimeSeat.ReservationId` vì cột đó cho phép null)
+- ⚠️ (ôn 17/10: vẫn lẫn) Cascade, Restrict, SetNull khác nhau thế nào? Reservation dùng gì, SetNull nằm ở bảng nào? (OnDelete mô tả chuyện xảy ra với **con**; SetNull ở `ShowtimeSeat.ReservationId` vì cột đó cho phép null)
 - Index là gì? Vì sao không đánh index lên mọi cột? (đọc nhanh nhưng ghi chậm, tốn chỗ)
 - Unique index khác index thường thế nào? Khi nào unique không đủ? (luật khoảng thời gian, chồng lấn)
-- ⚠️ Index `(A, B)` có giúp `WHERE B = ...` không? (không — leftmost prefix)
-- Vì sao code đã kiểm tra trùng rồi mà DB vẫn cần unique? (2 request cùng lúc đều kiểm tra "chưa có" → race condition)
+- ⚠️ (ôn 17/10: đúng lần 1, đúng thêm 1 lần nữa là ✅) Index `(A, B)` có giúp `WHERE B = ...` không? (không — leftmost prefix)
+- ⚠️ (ôn 17/10: thiếu ý race condition) Vì sao code đã kiểm tra trùng rồi mà DB vẫn cần unique? (2 request cùng lúc đều kiểm tra "chưa có" → race condition)
 - Integration test khác unit test thế nào? Vì sao dùng Testcontainers mà không dùng EF InMemory? (InMemory không có unique, FK, lock → test concurrency luôn pass dù code sai)
 - Vì sao tên test nên dài, mô tả rõ? (test đỏ thì đọc tên là biết luật nào bị vỡ, không cần mở code)

@@ -80,12 +80,12 @@ GHẾ  (ShowtimeSeat): Available → Held → Booked
 
 > Vì xong sớm, **17/10 làm luôn việc của 18/10** (dựng solution). Ngày 18/10 trở thành buffer hoặc bắt đầu sửa Auth của Project 1.
 
-### CN 18/10 — Dựng solution + hạ tầng
+### CN 18/10 — Dựng solution + hạ tầng ✅ (xong sớm 17/10)
 - [x] Solution: `Domain`, `Application`, `Infrastructure`, `Api`, `UnitTests`, `IntegrationTests` (mentor dựng khung 16/10)
 - [x] `docker-compose.yml` chạy Postgres
 - [x] EF Core DbContext + migration đầu tiên
 - [x] Integration test đầu tiên bằng Testcontainers: khởi động Postgres, chạy migration, assert bảng tồn tại
-- [ ] `git init` → commit → push lên GitHub
+- [x] `git init` → commit → push lên GitHub
 - **Xong khi:** `docker compose up` và `dotnet test` đều chạy xanh.
 
 ---
@@ -254,7 +254,7 @@ Cắt theo thứ tự từ trên xuống:
 
 | Giai đoạn | Hạn | Trạng thái |
 |---|---|---|
-| 0 — Khởi động | 18/10 | ⬜ |
+| 0 — Khởi động | 18/10 | ✅ xong 17/10 |
 | 1 — Auth + Catalog + Deploy | 25/10 | ⬜ |
 | 2 — Concurrency + Giữ ghế | 01/11 | ⬜ |
 | 3 — Hủy, Báo cáo, Test, README | 08/11 | ⬜ |
