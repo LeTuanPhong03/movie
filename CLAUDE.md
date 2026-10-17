@@ -8,4 +8,6 @@
   - thêm câu hỏi mới vào **Câu phỏng vấn đã luyện**, đánh dấu ⚠️ / ✅ theo kết quả ôn
   - tick checkbox tương ứng trong `docs/PLAN.md` nếu đã đạt "Xong khi"
 - Commit viết tiếng Việt với tiền tố `feat:` / `fix:` / `docs:` / `test:` / `refactor:` / `chore:`.
+- **Claude không tự chạy lệnh git làm thay đổi lịch sử/remote** (`commit`, `push`, `reset`, `rebase`...) trừ khi được yêu cầu rõ. Thay vào đó: đưa lệnh cho người học tự gõ, giải thích từng lệnh làm gì và khi nào dùng.
 - Commit không có Co-author claude.
+- Không tạo commit riêng chỉ để ghi kết quả ôn phỏng vấn: cập nhật ⚠️/✅ trong `NHAT-KY.md` rồi gộp vào commit docs của bài học kế tiếp.
