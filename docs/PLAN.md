@@ -3,6 +3,8 @@
 > Bản rút gọn còn 30 ngày từ bản 6 tuần. Phần cốt lõi (chống double-booking, giữ ghế/hết hạn, deploy, README) giữ nguyên.
 > Bản này giả định bạn làm khoảng **4–6 giờ/ngày**. Ít hơn mức đó thì gần như chắc chắn trễ, nên cắt bớt phạm vi sớm.
 
+> 📓 Đang học tới đâu, nhật ký và câu phỏng vấn đã luyện: xem [NHAT-KY.md](NHAT-KY.md).
+
 ## Mục tiêu cuối cùng (15/11)
 
 - [ ] API Movie Reservation chạy trên **link public** (có Swagger).
