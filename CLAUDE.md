@@ -8,3 +8,4 @@
   - thêm câu hỏi mới vào **Câu phỏng vấn đã luyện**, đánh dấu ⚠️ / ✅ theo kết quả ôn
   - tick checkbox tương ứng trong `docs/PLAN.md` nếu đã đạt "Xong khi"
 - Commit viết tiếng Việt với tiền tố `feat:` / `fix:` / `docs:` / `test:` / `refactor:` / `chore:`.
+- Commit không có Co-author claude.

@@ -8,9 +8,10 @@
 **Cập nhật lần cuối:** 17/10/2026
 
 **Bước tiếp theo:**
-1. **Bài 7:** integration test đầu tiên bằng **Testcontainers**: khởi động Postgres trong test, chạy migration, assert bảng tồn tại (việc còn lại của ngày 18/10 trong PLAN)
-2. Sau đó: `git push` lần đầu lên GitHub (remote `origin` đã có, nhánh `main` chưa push)
-3. **Cuối mỗi buổi:** ôn 2–3 câu trong kho phỏng vấn, **ưu tiên 2 câu ⚠️**
+1. Thử làm test **đỏ** cố ý (đổi `Assert.Equal(0, ...)` thành `1`) để thấy test fail trông thế nào, rồi sửa lại
+2. Commit Bài 7, rồi `git push` lần đầu lên GitHub (remote `origin` đã có, nhánh `main` chưa push) → xong ngày 18/10
+3. Sau đó: **19/10 Auth** (Register/Login JWT, role Admin/Customer, policy `AdminOnly`)
+4. **Cuối mỗi buổi:** ôn 2–3 câu trong kho phỏng vấn, **ưu tiên 2 câu ⚠️**
 
 ## 🔁 Cách ôn câu phỏng vấn
 
@@ -41,6 +42,7 @@
 | 17/10 | Bài 6: config còn lại | Mentor viết 6 config còn lại theo yêu cầu. Học `OnDelete`: Cascade / Restrict / SetNull và vì sao Reservation dùng Restrict (giữ lịch sử doanh thu) | Gắn SetNull nhầm vào bảng Reservation (đúng là ở `ShowtimeSeat.ReservationId`) ⚠️ |
 | 17/10 | Bài 6: index | Index = mục lục đã sắp xếp; đọc nhanh, ghi chậm; unique = index + luật; unique mạnh khi luật là "bằng nhau", luật khoảng thời gian (chồng lấn suất chiếu) phải kiểm tra bằng code. Tự quyết **không** unique `Showtimes(TheaterId, StartAt)`. Hiểu **leftmost prefix**, giải thích được vì sao EF không tạo index riêng cho `ShowtimeId` | Lúc đầu nói index `(TheaterId, StartAt)` giúp được `WHERE StartAt > now()` ⚠️ (sau đó đã trả lời đúng bài `Seats`) |
 | 17/10 | Bài 6: xong ✅ | Migration `AddConfigurations` đã apply; `\d "ShowtimeSeats"` có FK + unique; thử insert trùng tên phòng → lỗi `IX_Theaters_Name`, ghế vào phòng 999 → lỗi `FK_Seats_Theaters_TheaterId`. Commit `3294dce` | Lỡ `git commit -am` thành 2 commit (`-a` bỏ qua file mới) → gộp bằng `git reset --soft HEAD~2`. Thói quen: `git add .` → `git status` → commit |
+| 17/10 | Bài 7: Testcontainers | Hiểu vì sao không dùng EF InMemory (không có unique/FK/lock) và không dùng chung DB dev; `async`/`await`, `IAsyncLifetime`; tự viết 2 assert (`GetPendingMigrationsAsync` rỗng, `ShowtimeSeats` có 0 dòng). Test xanh lần đầu (~25s) | |
 
 ## 🎤 Câu phỏng vấn đã luyện
 
@@ -66,3 +68,5 @@
 - Unique index khác index thường thế nào? Khi nào unique không đủ? (luật khoảng thời gian, chồng lấn)
 - ⚠️ Index `(A, B)` có giúp `WHERE B = ...` không? (không — leftmost prefix)
 - Vì sao code đã kiểm tra trùng rồi mà DB vẫn cần unique? (2 request cùng lúc đều kiểm tra "chưa có" → race condition)
+- Integration test khác unit test thế nào? Vì sao dùng Testcontainers mà không dùng EF InMemory? (InMemory không có unique, FK, lock → test concurrency luôn pass dù code sai)
+- Vì sao tên test nên dài, mô tả rõ? (test đỏ thì đọc tên là biết luật nào bị vỡ, không cần mở code)

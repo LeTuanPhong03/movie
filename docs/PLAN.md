@@ -84,7 +84,7 @@ GHẾ  (ShowtimeSeat): Available → Held → Booked
 - [x] Solution: `Domain`, `Application`, `Infrastructure`, `Api`, `UnitTests`, `IntegrationTests` (mentor dựng khung 16/10)
 - [x] `docker-compose.yml` chạy Postgres
 - [x] EF Core DbContext + migration đầu tiên
-- [ ] Integration test đầu tiên bằng Testcontainers: khởi động Postgres, chạy migration, assert bảng tồn tại
+- [x] Integration test đầu tiên bằng Testcontainers: khởi động Postgres, chạy migration, assert bảng tồn tại
 - [ ] `git init` → commit → push lên GitHub
 - **Xong khi:** `docker compose up` và `dotnet test` đều chạy xanh.
 
