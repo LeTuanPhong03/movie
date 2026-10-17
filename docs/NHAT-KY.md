@@ -8,10 +8,21 @@
 **Cập nhật lần cuối:** 17/10/2026
 
 **Bước tiếp theo:**
-1. **Commit** Bài 5 (DbContext, connection string, migration `InitialCreate`)
-2. **Bài 6:** Configurations (Fluent API): thêm khóa ngoại, unique `(ShowtimeId, SeatId)`, lưu enum dạng chữ, giới hạn độ dài chuỗi → migration thứ 2
-3. Sau đó: test đầu tiên với Testcontainers
-3. Sau đó: cấu hình bảng (unique index, độ dài cột) → test đầu tiên với Testcontainers
+1. **Bài 6:** Configurations (Fluent API) trong `Infrastructure/Persistence/Configurations/` để sửa 3 vấn đề thấy qua `\d "ShowtimeSeats"`:
+   - chưa có **khóa ngoại** (entity chỉ có `int SeatId`, chưa có navigation property)
+   - chưa có **unique `(ShowtimeId, SeatId)`**, nên DB cho 2 dòng cùng ghế cùng suất
+   - `Status` lưu dạng **số**, nên đổi sang lưu chữ
+   - thêm giới hạn độ dài chuỗi, unique `Email` → migration thứ 2
+2. Sau đó: test đầu tiên với Testcontainers
+3. **Cuối mỗi buổi:** ôn 2–3 câu trong kho phỏng vấn (xem cách ôn bên dưới)
+
+## 🔁 Cách ôn câu phỏng vấn
+
+- Kho câu hỏi ở cuối file **không phải để trả lời hết ngay**, mà dùng để ôn dần.
+- Cuối mỗi buổi, mentor hỏi **2–3 câu ngẫu nhiên** (ưu tiên câu cũ). Trả lời bằng lời của mình, không nhìn tài liệu.
+- Câu trả lời sai hoặc ấp úng thì đánh dấu ⚠️ cạnh câu đó để hỏi lại hôm sau. Trả lời tốt 2 lần liền thì đánh dấu ✅.
+- Gợi ý trong ngoặc chỉ để tự kiểm tra, **không học thuộc**.
+- Chưa ôn buổi nào (tính đến 17/10).
 
 ## 📅 Nhật ký
 
@@ -28,6 +39,7 @@
 | 17/10 | Bài 4: xong ✅ | Tự kiểm chứng volume giữ dữ liệu sau `down`/`up`; commit `cb728c1` | |
 | 17/10 | Bài 5 phần 1 | Hiểu ORM / DbContext / DbSet / migration; cài EF Core 10 + Npgsql + `dotnet ef`; tự viết `AppDbContext` đủ 7 DbSet | Đặt tên kệ `ReservationSeats` cho `ShowtimeSeat` (tên DbSet = tên bảng) |
 | 17/10 | Bài 5 phần 2: xong ✅ | Connection string, `AddDbContext` (DI), migration `InitialCreate`, 7 bảng trong Postgres; tự giải thích đúng `__EFMigrationsHistory` | Phát hiện qua `\d`: **chưa có khóa ngoại, chưa có unique index**, Status lưu dạng số → học ở Bài 6 |
+| 17/10 | Commit Bài 5 | Commit `8fe5ded` | |
 
 ## 🎤 Câu phỏng vấn đã luyện
 
