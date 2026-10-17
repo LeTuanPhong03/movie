@@ -25,6 +25,7 @@ Những phần dưới đây ghi vào mục "Future work" trong README. Nếu d�
 ## Quy tắc thực hiện
 
 1. **Mỗi ngày ít nhất 1 commit.** Cuối ngày tick checkbox trong file này.
+   Commit viết **tiếng Việt**, giữ tiền tố ngắn: `feat:` (tính năng), `fix:` (sửa lỗi), `test:`, `docs:`, `refactor:`, `chore:` (việc lặt vặt/cấu hình). Ví dụ: `feat: thêm enum trạng thái ghế`.
 2. Mỗi ngày có một **"Xong khi"** (DoD). Chưa đạt thì chưa được tính là xong, và việc đó được chuyển sang buffer gần nhất.
 3. **Trễ quá 1 ngày mà buffer đã dùng hết**: cắt theo danh sách [Có thể cắt tiếp](#-có-thể-cắt-tiếp-nếu-trễ), **không cắt test concurrency**.
 4. Test dùng **DB thật (Postgres + Testcontainers)**, không dùng EF InMemory.
