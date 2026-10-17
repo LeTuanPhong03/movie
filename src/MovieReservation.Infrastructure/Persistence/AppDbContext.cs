@@ -7,7 +7,6 @@ public class AppDbContext : DbContext
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
     }
-
     public DbSet<Movie> Movies { get; set; }
     public DbSet<Reservation> Reservations { get; set; }
     public DbSet<Theater> Theaters { get; set; }
@@ -15,6 +14,9 @@ public class AppDbContext : DbContext
     public DbSet<Seat> Seats { get; set; }
     public DbSet<ShowtimeSeat> ShowtimeSeats { get; set; }
     public DbSet<User> Users { get; set; }
-
-
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+    }
 }

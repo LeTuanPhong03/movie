@@ -31,24 +31,28 @@ namespace MovieReservation.Infrastructure.Persistence.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Description")
-                        .HasColumnType("text");
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
 
                     b.Property<int>("DurationMinutes")
                         .HasColumnType("integer");
 
                     b.Property<string>("Genre")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("PosterUrl")
-                        .HasColumnType("text");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<int>("SuitableAge")
                         .HasColumnType("integer");
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.HasKey("Id");
 
@@ -78,16 +82,23 @@ namespace MovieReservation.Infrastructure.Persistence.Migrations
                     b.Property<int>("ShowtimeId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<decimal>("TotalPrice")
-                        .HasColumnType("numeric");
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
 
                     b.Property<int>("UserId")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ShowtimeId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Reservations");
                 });
@@ -105,12 +116,16 @@ namespace MovieReservation.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("Row")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
 
                     b.Property<int>("TheaterId")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("TheaterId", "Row", "Number")
+                        .IsUnique();
 
                     b.ToTable("Seats");
                 });
@@ -130,7 +145,8 @@ namespace MovieReservation.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer");
 
                     b.Property<decimal>("Price")
-                        .HasColumnType("numeric");
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
 
                     b.Property<DateTime>("StartAt")
                         .HasColumnType("timestamp with time zone");
@@ -139,6 +155,10 @@ namespace MovieReservation.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("MovieId");
+
+                    b.HasIndex("TheaterId", "StartAt");
 
                     b.ToTable("Showtimes");
                 });
@@ -166,10 +186,19 @@ namespace MovieReservation.Infrastructure.Persistence.Migrations
                     b.Property<int>("ShowtimeId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ReservationId");
+
+                    b.HasIndex("SeatId");
+
+                    b.HasIndex("ShowtimeId", "SeatId")
+                        .IsUnique();
 
                     b.ToTable("ShowtimeSeats");
                 });
@@ -184,9 +213,13 @@ namespace MovieReservation.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
 
                     b.ToTable("Theaters");
                 });
@@ -201,18 +234,84 @@ namespace MovieReservation.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
-                    b.Property<int>("Role")
-                        .HasColumnType("integer");
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Email")
+                        .IsUnique();
+
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("MovieReservation.Domain.Entities.Reservation", b =>
+                {
+                    b.HasOne("MovieReservation.Domain.Entities.Showtime", null)
+                        .WithMany()
+                        .HasForeignKey("ShowtimeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("MovieReservation.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("MovieReservation.Domain.Entities.Seat", b =>
+                {
+                    b.HasOne("MovieReservation.Domain.Entities.Theater", null)
+                        .WithMany()
+                        .HasForeignKey("TheaterId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("MovieReservation.Domain.Entities.Showtime", b =>
+                {
+                    b.HasOne("MovieReservation.Domain.Entities.Movie", null)
+                        .WithMany()
+                        .HasForeignKey("MovieId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("MovieReservation.Domain.Entities.Theater", null)
+                        .WithMany()
+                        .HasForeignKey("TheaterId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("MovieReservation.Domain.Entities.ShowtimeSeat", b =>
+                {
+                    b.HasOne("MovieReservation.Domain.Entities.Reservation", null)
+                        .WithMany()
+                        .HasForeignKey("ReservationId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("MovieReservation.Domain.Entities.Seat", null)
+                        .WithMany()
+                        .HasForeignKey("SeatId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("MovieReservation.Domain.Entities.Showtime", null)
+                        .WithMany()
+                        .HasForeignKey("ShowtimeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }
