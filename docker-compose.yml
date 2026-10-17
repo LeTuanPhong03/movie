@@ -1,0 +1,15 @@
+services:
+  db:                              # tên dịch vụ, mình tự đặt
+    image: postgres:17             # hộp cơm: Postgres phiên bản 17
+    container_name: movie-db
+    environment:                   # cấu hình khi mở hộp
+      POSTGRES_USER: movie
+      POSTGRES_PASSWORD: movie123
+      POSTGRES_DB: movie_reservation
+    ports:
+      - "5432:5432"                # cổng máy bạn : cổng trong container
+    volumes:
+      - pgdata:/var/lib/postgresql/data   # nơi lưu dữ liệu
+
+volumes:
+  pgdata:
