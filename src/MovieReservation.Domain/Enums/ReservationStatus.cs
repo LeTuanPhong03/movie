@@ -1,5 +1,5 @@
 namespace MovieReservation.Domain.Enums;
-public enum RevervationStatus
+public enum ReservationStatus
 {
     Pending,
     Confirmed,
