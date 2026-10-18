@@ -9,11 +9,10 @@ using System.Security.Cryptography;
 
 namespace MovieReservation.Infrastructure.Identity;
 
-/// <summary>
-/// Hợp đồng sinh access token, refresh token và băm token cho luồng xác thực.
-/// Cài đặt nằm ở Infrastructure (JwtTokenService).
-/// </summary>
 
+/// <summary>
+/// Cài đặt ITokenService sử dụng JWT để sinh access token và refresh token.
+/// </summary>
 public class JwtTokenService : ITokenService
 {
     private readonly IConfiguration configuration;

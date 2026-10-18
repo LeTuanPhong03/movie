@@ -1,8 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using MovieReservation.Domain.Entities;
+using MovieReservation.Application.Common.Interfaces;
 namespace MovieReservation.Infrastructure.Persistence;
 
-public class AppDbContext : DbContext
+
+/// <summary>
+/// Lớp DbContext để thao tác với cơ sở dữ liệu.
+/// </summary>
+public class AppDbContext : DbContext, IAppDbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
