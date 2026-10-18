@@ -5,10 +5,10 @@
 
 ## 📍 Hôm nay học gì
 
-**Cập nhật lần cuối:** 17/10/2026 (phiên 2)
+**Cập nhật lần cuối:** 18/10/2026
 
 **Bước tiếp theo:**
-1. **Bài 8 — Auth (việc của 19/10, làm sớm):** đang ở bước 4b/8 — viết `ITokenService` (Application) + `JwtTokenService` (Infrastructure): sinh access token JWT (claim Id, Email, FullName, Role), sinh refresh token ngẫu nhiên 64 byte, hash SHA-256; cấu hình `Jwt` (Key/Issuer/Audience/thời hạn) trong appsettings, Key lấy từ user-secrets/biến môi trường. Bước 4a (bảng `RefreshTokens`) đã xong. Lộ trình: (1) AuthN/AuthZ, JWT ✅ → (2) `RegisterCommand` trả `AuthResponse` → (3) `IPasswordHasher` + BCrypt → (4) `ITokenService` + entity `RefreshToken` + migration → (5) handler Register/Login trả token → (6) `RefreshTokenCommand` rotation (xóa token cũ) → (7) `AddAuthentication` + `AdminOnly` + Swagger → (8) seed admin, kiểm tra 401/403
+1. **Bài 8 — Auth (việc của 19/10, làm sớm):** đang ở bước 5/8 — handler Register/Login: chốt cách Application truy cập DB (interface `IAppDbContext` hay repository), đăng ký DI (`TimeProvider.System`, `IPasswordHasher`, `ITokenService`, MediatR), viết `RegisterCommandHandler`, validator, controller `AuthController`. Bước 4 (bảng RefreshTokens + JwtTokenService) đã xong. Lộ trình: (1) AuthN/AuthZ, JWT ✅ → (2) `RegisterCommand` trả `AuthResponse` → (3) `IPasswordHasher` + BCrypt → (4) `ITokenService` + entity `RefreshToken` + migration → (5) handler Register/Login trả token → (6) `RefreshTokenCommand` rotation (xóa token cũ) → (7) `AddAuthentication` + `AdminOnly` + Swagger → (8) seed admin, kiểm tra 401/403
 2. Tham khảo code Project 1 tại `D:\hoc\HocCS\E-Commerce-API\Ecommerce` (JwtTokenGenerator, BCryptPasswordHasher, LoginCommandHandler) — tái dùng có chỉnh, không copy nguyên xi
 
 ## 🔁 Cách ôn câu phỏng vấn
@@ -18,6 +18,8 @@
 - Câu trả lời sai hoặc ấp úng thì đánh dấu ⚠️ cạnh câu đó để hỏi lại hôm sau. Trả lời tốt 2 lần liền thì đánh dấu ✅.
 - Gợi ý trong ngoặc chỉ để tự kiểm tra, **không học thuộc**.
 - 17/10: ôn lần đầu cuối buổi. 3 câu: index leftmost prefix đúng; OnDelete và unique-vs-race còn thiếu ý (⚠️).
+- 18/10 (đầu buổi): OnDelete đủ 2 ý (SetNull vì cột cho phép null + không xóa đơn để giữ lịch sử) → ✅. Kiểu khóa ngoại: đúng bước phát hiện (`migrations add`) nhưng chỉ nói "nhầm", chưa nêu luật. SHA-256 vs BCrypt: đúng vế mật khẩu, vế token nêu lý do phụ ("đổi nhiều lần") thay vì lý do chính (token ngẫu nhiên, không đoán được).
+- 17/10 (phiên 2, cuối buổi): 3 câu ⚠️ trong ngày — 401/403 đủ 2 vế; defaultValue đúng ý chính (còn mơ hồ chữ "các dòng cũ"); Infrastructure đúng ý nhưng chưa nêu tên Dependency Inversion. Cả 3 đúng lần 1.
 - 17/10 (phiên 2, đầu buổi): OnDelete — đặt SetNull **đúng chỗ** lần đầu, còn thiếu ý "thực tế không xóa đơn mà chuyển Cancelled". Unique-vs-race — nêu đúng race condition. Cả hai đúng lần 1, đúng thêm 1 lần nữa là ✅.
 
 ## 📅 Nhật ký
@@ -56,6 +58,11 @@
 | 17/10 | Bài 8 bước 4a: review entity | Tự viết entity + config + DbSet, có Cascade và unique; **xin review trước khi migration** (thói quen tốt) | `UserId` để `string` trong khi `User.Id` là `int` ⚠️ (kiểu khóa ngoại phải khớp khóa chính); tên file `efreshTokenConfiguration.cs`; thiếu `HasMaxLength(64)`; tên `Token` thay vì `TokenHash` → **đã sửa hết** sau 1 lượt review |
 | 17/10 | Bài 8 bước 4a: migration | Tạo `AddRefreshTokens`; đọc file thấy 2 `CreateIndex` (unique `TokenHash` tự viết + `UserId` do EF tự tạo cho khóa ngoại) và `onDelete: Cascade`. Học **convention** của EF (`Id` → khóa chính tự tăng, không cần `HasKey`) | |
 | 17/10 | Bài 8 bước 4a: xong ✅ | `database update` thành công, `\d "RefreshTokens"` đủ 5 cột (`TokenHash varchar(64)`, thời gian `timestamptz`); 4 migration trong `__EFMigrationsHistory` | Docker Desktop hay tắt sau khi tắt máy → bật "Start when you sign in" |
+| 18/10 | Bài 8 bước 4b: cấu hình | Phân biệt `appsettings.json` (chung mọi môi trường) và `appsettings.Development.json` (chỉ máy dev, ghi đè); thứ tự ghi đè json → Development → user-secrets → biến môi trường. `dotnet user-secrets init/set` lưu `Jwt:Key` ở `%APPDATA%\Microsoft\UserSecrets\<Id>` — **ngoài repo** để không thể commit/zip nhầm | |
+| 18/10 | Bài 8 bước 4b: review ITokenService | Mục `Jwt` trong appsettings đúng (không có Key); user-secrets đã set. Bản đầu `ITokenService`: `GenerateToken(string userId, string role)` + `GenerateRefreshToken()`. Học cách thiết kế interface bằng cách **đi thử luồng của handler** xem còn thiếu gì | `userId` lại để `string` ⚠️; thiếu hạn access token cho `AuthResponse`; thiếu hash + hạn của refresh token để lưu DB |
+| 18/10 | Bài 8 bước 4b: ITokenService ✅ | Sau khi đi thử luồng Register (5 thứ handler cần), tự thiết kế đủ: `AccessTokenResult(token, hạn)`, `RefreshTokenResult(gốc, hash, hạn, ngày tạo)`, `HashToken`, truyền `User` | Gõ sai `ExpiriesAt` ⚠️ (lỗi chính tả lặp lại) |
+| 18/10 | Bài 8 bước 4b: JwtTokenService (dở) | Hiểu lỗi "no accessible extension method": `GetValue` là extension method nằm ở package `Microsoft.Extensions.Configuration.Binder` (Api có sẵn vì dùng Web SDK, Infrastructure thì không); positional record phải tạo bằng `( )`; `?? throw` kiểm tra chuỗi trước khi dùng. Quyết định: từ nay mọi file C# có XML doc `/// <summary>` | Gọi `GetUtcNow()` 2 lần → 2 mốc thời gian khác nhau; CS0161 do method chưa có `return` |
+| 18/10 | Bài 8 bước 4b: xong ✅ | `JwtTokenService` đủ 3 method, `expiresAt` tính 1 lần dùng cho cả token và kết quả, refresh token 64 byte ngẫu nhiên, `GenerateRefreshToken` gọi lại `HashToken`; có XML summary | Hash dạng Base64 (44 ký tự) thay vì hex — vẫn đúng, nhưng đã chọn thì không đổi nữa vì hash cũ trong DB sẽ không khớp |
 
 ## 🎤 Câu phỏng vấn đã luyện
 
@@ -76,22 +83,25 @@
 - Fluent API configuration là gì? Vì sao không dùng attribute `[MaxLength]` trong Domain?
 - Vì sao unique phải là cặp `(ShowtimeId, SeatId)` chứ không chỉ `SeatId`? (chỉ `SeatId` thì mỗi ghế chỉ được nằm trong 1 suất duy nhất)
 - `virtual` / `override` / `base` khác nhau thế nào?
-- ⚠️ (ôn 17/10: vẫn lẫn → phiên 2: đúng chỗ SetNull, thiếu ý không xóa đơn) Cascade, Restrict, SetNull khác nhau thế nào? Reservation dùng gì, SetNull nằm ở bảng nào? (OnDelete mô tả chuyện xảy ra với **con**; SetNull ở `ShowtimeSeat.ReservationId` vì cột đó cho phép null; Restrict ở `Reservation.UserId/ShowtimeId` = không cho xóa User/Showtime đã có đơn; thực tế **không xóa đơn**, chỉ chuyển `Cancelled` để giữ doanh thu và nhả ghế đúng cách)
+- ✅ (ôn 17/10: vẫn lẫn → phiên 2: đúng chỗ SetNull → 18/10: đủ ý) Cascade, Restrict, SetNull khác nhau thế nào? Reservation dùng gì, SetNull nằm ở bảng nào? (OnDelete mô tả chuyện xảy ra với **con**; SetNull ở `ShowtimeSeat.ReservationId` vì cột đó cho phép null; Restrict ở `Reservation.UserId/ShowtimeId` = không cho xóa User/Showtime đã có đơn; thực tế **không xóa đơn**, chỉ chuyển `Cancelled` để giữ doanh thu và nhả ghế đúng cách)
 - Index là gì? Vì sao không đánh index lên mọi cột? (đọc nhanh nhưng ghi chậm, tốn chỗ)
 - Unique index khác index thường thế nào? Khi nào unique không đủ? (luật khoảng thời gian, chồng lấn)
 - ⚠️ (ôn 17/10: đúng lần 1, đúng thêm 1 lần nữa là ✅) Index `(A, B)` có giúp `WHERE B = ...` không? (không — leftmost prefix)
 - ⚠️ (ôn 17/10: thiếu ý race condition → phiên 2: đúng lần 1) Vì sao code đã kiểm tra trùng rồi mà DB vẫn cần unique? (2 request cùng lúc đều kiểm tra "chưa có" → race condition)
 - Integration test khác unit test thế nào? Vì sao dùng Testcontainers mà không dùng EF InMemory? (InMemory không có unique, FK, lock → test concurrency luôn pass dù code sai)
 - Vì sao tên test nên dài, mô tả rõ? (test đỏ thì đọc tên là biết luật nào bị vỡ, không cần mở code)
-- ⚠️ (17/10: quên vế 401) Authentication khác Authorization thế nào? Khi nào trả 401, khi nào 403? (không có token/token sai → 401; có token hợp lệ nhưng không đủ quyền → 403)
+- ⚠️ (17/10: quên vế 401 → cuối buổi đúng đủ, lần 1) Authentication khác Authorization thế nào? Khi nào trả 401, khi nào 403? (không có token/token sai → 401; có token hợp lệ nhưng không đủ quyền → 403)
 - JWT gồm mấy phần? Vì sao không để `PasswordHash` (hay dữ liệu nhạy cảm) trong payload? (payload chỉ là base64, ai cầm token cũng đọc được; chữ ký đã chứng minh danh tính nên request thường không cần hash)
 - Vì sao API đăng ký không cho client gửi `Role`? (client tự gửi `Admin` là leo quyền — privilege escalation; Admin chỉ seed hoặc do admin cấp)
 - Vì sao không trả entity ra ngoài API? (lộ cột nhạy cảm như `PasswordHash`, client bị buộc chặt vào cấu trúc DB)
 - Vì sao cần refresh token? Sao không cho access token sống 30 ngày luôn? (access token không thu hồi được vì server không lưu; refresh token lưu DB nên thu hồi được)
 - Refresh token rotation là gì? (mỗi lần refresh thì cấp token mới và hủy token cũ → token bị lộ chỉ dùng được 1 lần)
 - Vì sao hash mật khẩu bằng BCrypt mà không dùng SHA-256? (SHA-256 quá nhanh → brute-force hàng tỷ lần/giây; BCrypt cố ý chậm, có work factor tăng dần được, salt nằm sẵn trong hash)
-- ⚠️ (17/10: nêu được "cái gì", thiếu "vì sao") Thêm cột NOT NULL vào bảng đã có dữ liệu thì sao? Vì sao EF sinh `defaultValue: ""`? (không có default thì các dòng cũ thành NULL → vi phạm NOT NULL → Postgres từ chối, migration hỏng)
+- ⚠️ (17/10: thiếu "vì sao" → cuối buổi đúng ý, lần 1; nhớ nói rõ "các dòng **đã có sẵn**") Thêm cột NOT NULL vào bảng đã có dữ liệu thì sao? Vì sao EF sinh `defaultValue: ""`? (không có default thì các dòng cũ thành NULL → vi phạm NOT NULL → Postgres từ chối, migration hỏng)
 - EF quyết định cột NULL hay NOT NULL dựa vào đâu? (`string` → NOT NULL, `string?` → NULL, nhờ nullable reference types) NOT NULL có chặn được chuỗi rỗng `""` không? (không → cần validator `NotEmpty`)
 - Vì sao chọn MediatR / BCrypt? Có lựa chọn nào khác? (MediatR: tự gọi handler, `Mediator` source-generated, Wolverine; hash: Argon2id được OWASP ưu tiên, PBKDF2 có sẵn trong .NET; chọn BCrypt vì phổ biến, salt sẵn, đủ an toàn)
-- ⚠️ (17/10: chưa trả lời được) Vì sao thư viện BCrypt / JWT nằm ở Infrastructure mà không ở Application? (Application chỉ khai báo interface — *cần gì*; Infrastructure quyết định *làm bằng gì*; đổi thư viện chỉ sửa Infrastructure, Application không biết)
-- Vì sao lưu hash của refresh token chứ không lưu nguyên chuỗi? Sao hash bằng SHA-256 mà mật khẩu lại phải BCrypt? (DB lộ thì hacker không dùng được token; token ngẫu nhiên 64 byte không đoán được nên hash nhanh vẫn an toàn, còn mật khẩu do người đặt nên dễ đoán → cần hash chậm; BCrypt có salt ngẫu nhiên nên không `WHERE TokenHash = ...` được)
+- ⚠️ (17/10: chưa trả lời được → cuối buổi đúng ý, lần 1; thiếu tên **Dependency Inversion**) Vì sao thư viện BCrypt / JWT nằm ở Infrastructure mà không ở Application? (Application chỉ khai báo interface — *cần gì*; Infrastructure quyết định *làm bằng gì*; đổi thư viện chỉ sửa Infrastructure, Application không biết)
+- ⚠️ (18/10: nêu lý do phụ) Vì sao lưu hash của refresh token chứ không lưu nguyên chuỗi? Sao hash bằng SHA-256 mà mật khẩu lại phải BCrypt? (DB lộ thì hacker không dùng được token; token ngẫu nhiên 64 byte không đoán được nên hash nhanh vẫn an toàn, còn mật khẩu do người đặt nên dễ đoán → cần hash chậm; BCrypt có salt ngẫu nhiên nên không `WHERE TokenHash = ...` được)
+- ⚠️ (18/10: chỉ nói "nhầm") Khóa ngoại khác kiểu khóa chính thì sao? Bị phát hiện ở bước nào? (FK phải cùng kiểu PK nó trỏ tới; build không bắt được, EF báo lỗi lúc `migrations add`)
+- Vì sao dùng user-secrets mà không chỉ `.gitignore`? (file đã track thì ignore vô tác dụng; secret trong thư mục đi theo khi zip; lộ 1 lần là nằm mãi trong lịch sử git; user-secrets ở ngoài repo nên không thể commit nhầm, ASP.NET tự đọc ở Development)
+- Thiết kế interface thế nào cho đúng? (đóng vai người dùng nó — handler — đi thử từng bước xem cần những gì; muốn trả nhiều giá trị thì gói vào record)

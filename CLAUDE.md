@@ -11,3 +11,4 @@
 - **Claude không tự chạy lệnh git làm thay đổi lịch sử/remote** (`commit`, `push`, `reset`, `rebase`...) trừ khi được yêu cầu rõ. Thay vào đó: đưa lệnh cho người học tự gõ, giải thích từng lệnh làm gì và khi nào dùng.
 - Commit không có Co-author claude.
 - Không tạo commit riêng chỉ để ghi kết quả ôn phỏng vấn: cập nhật ⚠️/✅ trong `NHAT-KY.md` rồi gộp vào commit docs của bài học kế tiếp.
+- **XML documentation (từ 18/10):** mọi file C# mới (trừ migration do EF sinh) có **một** `/// <summary>` tiếng Việt đặt trên class/interface/record chính, nói chức năng của cả file. Không bắt buộc summary cho từng method. Khi review code nhớ kiểm tra mục này.
