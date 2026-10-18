@@ -1,6 +1,13 @@
 @MovieReservation.Api_HostAddress = http://localhost:5161
 
-GET {{MovieReservation.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+POST {{MovieReservation.Api_HostAddress}}/api/auth/register
+Content-Type: application/json
+
+{
+  "fullName": "Lê Tuấn Phong",
+  "email": "phong@gmail.com",
+  "password": "MatKhau123!",
+  "confirmPassword": "MatKhau123!"
+}
 
 ###
