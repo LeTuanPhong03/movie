@@ -8,7 +8,7 @@
 **Cập nhật lần cuối:** 19/10/2026
 
 **Bước tiếp theo:**
-1. **Bài 8 còn lại:** Register/Login/Refresh + validator xong. Còn: (7) `AddAuthentication` (JwtBearer, kiểm tra chữ ký/issuer/audience/hạn) + policy `AdminOnly` + nút Authorize trên Swagger → (8) seed admin từ config (mật khẩu ở user-secrets), endpoint thử chỉ Admin gọi được, kiểm tra 401 (không token) / 403 (token Customer). Sau đó tick PLAN 19/10
+1. **Bài 9 — Theater + Movie (việc của 20/10):** `CreateTheaterCommand` kèm sơ đồ ghế (rows, seatsPerRow → tự sinh `Seat`), `Create/Update/DeleteMovieCommand`, `GetMoviesQuery` phân trang cơ bản, validator, chỉ Admin ghi được (`AdminOnly`)
 2. Tham khảo code Project 1 tại `D:\hoc\HocCS\E-Commerce-API\Ecommerce` (ValidationBehavior, LoginCommandValidator, cấu hình Swagger Authorize)
 
 ## 🔁 Cách ôn câu phỏng vấn
@@ -76,6 +76,8 @@
 | 19/10 | Bài 8: validator | Cài FluentValidation 12.1.1; viết `RegisterCommandValidator`; hiểu `ValidationBehavior` (generic cho mọi command, xin mọi `IValidator<TRequest>`, chạy hết, có lỗi thì ném `ValidationException`, không lỗi thì `next()` cho tới handler); file luật vs người kiểm tra; validator kiểm tra hình dạng (400), handler kiểm tra nghiệp vụ cần DB (409) | `ValidationBehavior` nhờ AI viết, chưa hiểu → đã giải thích từng dòng; **quên đăng ký** behavior + validator trong `AddApplication` ⚠️; lý do 72 ký tự nêu chưa đúng |
 | 19/10 | Bài 8: Login | Tự viết `LoginCommand`/validator/handler/endpoint; báo lỗi chung chống user enumeration; Login không kiểm tra độ dài mật khẩu; 401 vs 403 áp dụng đúng (→ ✅); chọn named arguments (đảo thứ tự được) — biết thêm cách `required init` | Quên `using` EF (extension method); truyền `AuthResponse` sai vị trí + truyền entity thay `UserDto`; ném nhầm `UnauthorizedAccessException` (.NET); **có `Add` nhưng quên `SaveChangesAsync`** ⚠️ (ngược lỗi hôm qua); namespace lệch thư mục |
 | 19/10 | Bài 8: Refresh + gom code ✅ | Người học trả lời 5 câu thiết kế rồi mentor code (theo yêu cầu tăng tốc): `AuthTokenIssuer` gom phần cấp token (AddRefreshToken → SaveChanges → CreateResponse) dùng cho Register/Login/Refresh; `RefreshTokenCommand` rotation (hash → tìm → kiểm tra hạn → Remove cũ + Add mới trong 1 SaveChanges); bắt `DbUpdateConcurrencyException` khi 2 request dùng cùng 1 token → 401. Test bằng curl: register, login email viết hoa, refresh 200, dùng lại token cũ bị từ chối, token mới dùng được; DB đúng 2 token | Câu 4: tưởng `/refresh` cần access token ⚠️ (gọi refresh chính là lúc access token hết hạn); câu 5: chưa biết 2 tab dùng chung 1 token → race |
+| 19/10 | Bài 8 bước 7: JWT + AdminOnly ✅ | Tự code: package JwtBearer (Api), `AddAuthentication().AddJwtBearer` kiểm tra chữ ký/issuer/audience/hạn + `ClockSkew` 30s, policy `AdminOnly` (`RequireRole`), Swagger Authorize, `UseAuthentication` trước `UseAuthorization`, `AccountController` (`/me`, `/admin-only`). Test: không token → 401, token Customer → 403, `/me` → 200. Hiểu `Add...` (đăng ký) vs `Use...` (đặt trạm); `AddPolicy(tên, Action<builder>)`; tên tham số lambda tự đặt vs tên property cố định; 401/403 do middleware tự trả (khác 500 của exception trong handler) | Gọi nhầm `AddBearerToken` thay `AddJwtBearer` (IntelliSense) |
+| 19/10 | Bài 8 bước 8: seed admin ✅ — **Bài 8 xong** | Người học trả lời 3 câu, mentor code `AdminSeeder` (Infrastructure): email ở appsettings `Admin:Email`, mật khẩu ở user-secrets/biến môi trường `Admin:Password`, idempotent (có rồi thì bỏ qua), thiếu cấu hình thì log cảnh báo; Program.cs tạo scope riêng để chạy lúc khởi động. Test: login admin → `/admin-only` 200, chạy lần 2 không tạo lại | Định để mật khẩu admin trong file seed ⚠️ (repo public → lộ) |
 
 ## 🎤 Câu phỏng vấn đã luyện
 
@@ -135,5 +137,12 @@
 - Login sai nên báo chung hay riêng "email không tồn tại" / "sai mật khẩu"? (chung — chống **user enumeration**; nâng cao: thời gian phản hồi cũng có thể lộ — timing attack; endpoint register báo "email đã tồn tại" là đánh đổi chấp nhận được)
 - Vì sao validator của Login không kiểm tra độ dài/định dạng mật khẩu? (luật đăng ký có thể đổi; người dùng cũ với mật khẩu theo luật cũ sẽ bị khóa ngoài; Login chỉ cần so với hash)
 - Client đã cầm token gốc thì hash refresh token trong DB để làm gì? (chống **lộ DB** — mất mọi tài khoản cùng lúc; trộm token từ client thì chống bằng lớp khác: hạn ngắn, rotation, thu hồi, cookie HttpOnly)
-- ⚠️ (19/10: tưởng cần) `/auth/refresh` có cần access token không? (không — refresh được gọi đúng lúc access token hết hạn; bằng chứng danh tính là chính refresh token)
-- Refresh token rotation khi 2 tab cùng gửi 1 token thì sao? (race: cả hai tìm thấy, bên lưu sau xóa dòng đã mất → `DbUpdateConcurrencyException` → trả 401; chỉ một bên thắng)
+- (19/10: tưởng cần → tóm tắt lại đúng, lần 1) `/auth/refresh` có cần access token không? (không — refresh được gọi đúng lúc access token hết hạn; bằng chứng danh tính là chính refresh token)
+- (19/10: tóm tắt lại đúng, lần 1) Refresh token rotation khi 2 tab cùng gửi 1 token thì sao? (race: cả hai tìm thấy, bên lưu sau xóa dòng đã mất → `DbUpdateConcurrencyException` → trả 401; chỉ một bên thắng)
+- ⚠️ (19/10: trả lời chung chung "payload + signature + header") Server kiểm tra những gì trên JWT? (chữ ký bằng Jwt:Key → chưa bị sửa; issuer; audience; hạn `exp`)
+- Đổi Role trong DB thì token cũ có quyền mới ngay không? (không — role nằm trong token, server không hỏi DB; phải đợi refresh lấy token mới; đánh đổi của JWT, lý do access token hạn ngắn)
+- `UseAuthentication` trước hay sau `UseAuthorization`? (trước — biết là ai rồi mới xét quyền)
+- Vì sao 401/403 trả đúng mã mà `ConflictException` lại ra 500? (401/403 do middleware xác thực/phân quyền tự tạo response trước khi tới controller; exception ném trong handler thì chưa ai đổi thành mã HTTP → 500, cần middleware xử lý lỗi)
+- ⚠️ (19/10: định ghi vào file seed) Mật khẩu admin seed để ở đâu? (không trong code/appsettings vì repo public; user-secrets ở máy dev, biến môi trường trên server; email không bí mật thì để appsettings)
+- Seed idempotent là gì? Vì sao seed chạy lúc khởi động mà không trong handler? (chạy nhiều lần kết quả như 1 lần — kiểm tra tồn tại trước; không ai gọi API để kích hoạt seed; fail fast)
+- Vì sao seed phải `CreateScope()`? (DbContext là Scoped, lúc khởi động chưa có request nên chưa có scope)

@@ -25,6 +25,8 @@ public static class DependencyInjection
         services.AddScoped<ITokenService, JwtTokenService>();
         // TimeProvider
         services.AddSingleton(TimeProvider.System);
+        // Seed admin lúc khởi động (Program.cs gọi)
+        services.AddScoped<AdminSeeder>();
         return services;
     }
 }

@@ -92,12 +92,12 @@ GHẾ  (ShowtimeSeat): Available → Held → Booked
 
 ## Tuần 1 (19–25/10) — Auth + Catalog + deploy sớm
 
-### T2 19/10 — Auth
+### T2 19/10 — Auth ✅
 - [x] Lấy lại Register/Login JWT từ Project 1
 - [x] Register và Login đều trả **access token + refresh token** (quyết định 17/10: làm luồng chuẩn, không cắt)
 - [x] Bảng `RefreshTokens`; `RefreshTokenCommand` cấp token mới và **xóa token cũ** (rotation)
-- [ ] Hai role `Admin` và `Customer`, seed 1 admin từ config (không hard-code password)
-- [ ] Policy `AdminOnly`, Swagger có nút Authorize
+- [x] Hai role `Admin` và `Customer`, seed 1 admin từ config (không hard-code password)
+- [x] Policy `AdminOnly`, Swagger có nút Authorize
 - **Xong khi:** login admin lấy được token, gọi endpoint admin với token Customer thì nhận **403**; refresh trả token mới, dùng lại refresh token cũ thì bị từ chối.
 - ⏱️ Thêm refresh token tốn khoảng +½–1 ngày → nếu tràn thì dùng Buffer #1 (25/10).
 
