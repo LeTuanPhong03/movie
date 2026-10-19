@@ -2,13 +2,14 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using MovieReservation.Application.Features.Auth.DTOs;
 using MovieReservation.Application.Features.Auth.Login;
+using MovieReservation.Application.Features.Auth.Logout;
 using MovieReservation.Application.Features.Auth.Refresh;
 using MovieReservation.Application.Features.Auth.Register;
 
 namespace MovieReservation.Api.Controllers;
 
 /// <summary>
-/// Endpoint xác thực: đăng ký, đăng nhập, làm mới token. Cả 3 đều không cần access token.
+/// Endpoint xác thực: đăng ký, đăng nhập, làm mới token, đăng xuất. Không endpoint nào cần access token.
 /// Controller chỉ nhận request và chuyển cho MediatR, không chứa logic nghiệp vụ.
 /// </summary>
 [ApiController]
@@ -34,5 +35,12 @@ public class AuthController(ISender sender) : ControllerBase
     {
         var result = await sender.Send(command, cancellationToken);
         return Ok(result);
+    }
+
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout(LogoutCommand command, CancellationToken cancellationToken)
+    {
+        await sender.Send(command, cancellationToken);
+        return NoContent();
     }
 }

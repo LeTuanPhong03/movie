@@ -5,7 +5,7 @@
 
 ## 📍 Hôm nay học gì
 
-**Cập nhật lần cuối:** 19/10/2026
+**Cập nhật lần cuối:** 19/10/2026 (cuối buổi)
 
 **Bước tiếp theo:**
 1. **Bài 9 — Theater + Movie (việc của 20/10):** `CreateTheaterCommand` kèm sơ đồ ghế (rows, seatsPerRow → tự sinh `Seat`), `Create/Update/DeleteMovieCommand`, `GetMoviesQuery` phân trang cơ bản, validator, chỉ Admin ghi được (`AdminOnly`)
@@ -18,6 +18,7 @@
 - Câu trả lời sai hoặc ấp úng thì đánh dấu ⚠️ cạnh câu đó để hỏi lại hôm sau. Trả lời tốt 2 lần liền thì đánh dấu ✅.
 - Gợi ý trong ngoặc chỉ để tự kiểm tra, **không học thuộc**.
 - 17/10: ôn lần đầu cuối buổi. 3 câu: index leftmost prefix đúng; OnDelete và unique-vs-race còn thiếu ý (⚠️).
+- 19/10 (cuối buổi): 3 câu ⚠️ trong ngày — JWT 4 thứ đúng (issuer/audience giải thích còn mơ hồ); Add vs SaveChanges đúng (ghi rõ: "không báo lỗi"); secret qua biến môi trường đúng (lý do: appsettings được commit lên repo public, không phải "lộ khi deploy"). Cả 3 đúng lần 1.
 - 18/10 (cuối buổi): 3 câu — `user.Id` sau `Add` đúng; đăng ký `IAppDbContext` đúng ý (diễn đạt "request mới cùng luồng" còn lẫn — lỗi nằm **trong cùng 1 request**); extension method đúng ý (nhớ: không thật sự sửa class, `this` đánh dấu kiểu được mở rộng, cần `using`). Cả 3 đúng lần 1.
 - 18/10 (đầu buổi): OnDelete đủ 2 ý (SetNull vì cột cho phép null + không xóa đơn để giữ lịch sử) → ✅. Kiểu khóa ngoại: đúng bước phát hiện (`migrations add`) nhưng chỉ nói "nhầm", chưa nêu luật. SHA-256 vs BCrypt: đúng vế mật khẩu, vế token nêu lý do phụ ("đổi nhiều lần") thay vì lý do chính (token ngẫu nhiên, không đoán được).
 - 17/10 (phiên 2, cuối buổi): 3 câu ⚠️ trong ngày — 401/403 đủ 2 vế; defaultValue đúng ý chính (còn mơ hồ chữ "các dòng cũ"); Infrastructure đúng ý nhưng chưa nêu tên Dependency Inversion. Cả 3 đúng lần 1.
@@ -78,6 +79,7 @@
 | 19/10 | Bài 8: Refresh + gom code ✅ | Người học trả lời 5 câu thiết kế rồi mentor code (theo yêu cầu tăng tốc): `AuthTokenIssuer` gom phần cấp token (AddRefreshToken → SaveChanges → CreateResponse) dùng cho Register/Login/Refresh; `RefreshTokenCommand` rotation (hash → tìm → kiểm tra hạn → Remove cũ + Add mới trong 1 SaveChanges); bắt `DbUpdateConcurrencyException` khi 2 request dùng cùng 1 token → 401. Test bằng curl: register, login email viết hoa, refresh 200, dùng lại token cũ bị từ chối, token mới dùng được; DB đúng 2 token | Câu 4: tưởng `/refresh` cần access token ⚠️ (gọi refresh chính là lúc access token hết hạn); câu 5: chưa biết 2 tab dùng chung 1 token → race |
 | 19/10 | Bài 8 bước 7: JWT + AdminOnly ✅ | Tự code: package JwtBearer (Api), `AddAuthentication().AddJwtBearer` kiểm tra chữ ký/issuer/audience/hạn + `ClockSkew` 30s, policy `AdminOnly` (`RequireRole`), Swagger Authorize, `UseAuthentication` trước `UseAuthorization`, `AccountController` (`/me`, `/admin-only`). Test: không token → 401, token Customer → 403, `/me` → 200. Hiểu `Add...` (đăng ký) vs `Use...` (đặt trạm); `AddPolicy(tên, Action<builder>)`; tên tham số lambda tự đặt vs tên property cố định; 401/403 do middleware tự trả (khác 500 của exception trong handler) | Gọi nhầm `AddBearerToken` thay `AddJwtBearer` (IntelliSense) |
 | 19/10 | Bài 8 bước 8: seed admin ✅ — **Bài 8 xong** | Người học trả lời 3 câu, mentor code `AdminSeeder` (Infrastructure): email ở appsettings `Admin:Email`, mật khẩu ở user-secrets/biến môi trường `Admin:Password`, idempotent (có rồi thì bỏ qua), thiếu cấu hình thì log cảnh báo; Program.cs tạo scope riêng để chạy lúc khởi động. Test: login admin → `/admin-only` 200, chạy lần 2 không tạo lại | Định để mật khẩu admin trong file seed ⚠️ (repo public → lộ) |
+| 19/10 | Bài 8: Logout ✅ | Người học phát hiện thiếu logout; trả lời 3 câu (không cần access token ✅, token không tồn tại → ban đầu chọn 401 ⚠️ — đúng là 204 vì idempotent, thiết bị khác không bị ảnh hưởng ✅); mentor code `LogoutCommand` dùng `ExecuteDeleteAsync` (1 câu DELETE, xóa 0 dòng không lỗi). Test: logout 204, logout lần 2 vẫn 204, token đã logout không refresh được, token điện thoại vẫn refresh 200 | |
 
 ## 🎤 Câu phỏng vấn đã luyện
 
@@ -127,7 +129,7 @@
 - (18/10 cuối buổi: đúng lần 1, diễn đạt còn lẫn) Đăng ký `IAppDbContext` thế nào cho đúng? Vì sao không dùng `AddScoped<IAppDbContext, AppDbContext>()`? (dạng đó tạo DbContext thứ 2 trong cùng request; dùng factory `sp => sp.GetRequiredService<AppDbContext>()` để 2 tên trỏ về 1 object)
 - (18/10 cuối buổi: đúng lần 1) Sau `Add(user)` thì `user.Id` bằng bao nhiêu? Khi nào có Id? Muốn lưu cha + con cùng lúc thì làm sao? (0; sau `SaveChanges` vì DB sinh; gắn navigation `child.Parent = parent`, EF tự điền FK trong 1 transaction)
 - Navigation property có tạo cột trong DB không? (không — migration rỗng; chỉ khóa ngoại mới là cột)
-- ⚠️ (18/10: quên `Add`; 19/10: quên `SaveChanges`) `Add` và `SaveChangesAsync` mỗi cái làm gì, thiếu một trong hai thì sao? Chỉ gọi `SaveChangesAsync` mà không `Add` thì sao? (DbContext không theo dõi object → không INSERT gì, không báo lỗi)
+- ⚠️ (18/10: quên `Add`; 19/10: quên `SaveChanges` → cuối buổi giải thích đúng, lần 1) `Add` và `SaveChangesAsync` mỗi cái làm gì, thiếu một trong hai thì sao? Chỉ gọi `SaveChangesAsync` mà không `Add` thì sao? (DbContext không theo dõi object → không INSERT gì, không báo lỗi)
 - Vì sao nên dùng named arguments khi tạo record nhiều tham số? (tham số cùng kiểu bị đảo thì compiler không bắt được)
 - `new X(...)` khác `new X { ... }` thế nào? (`( )` đưa giá trị vào constructor lúc tạo; `{ }` = gọi constructor rỗng rồi gán từng property — quên property thì thành giá trị mặc định, compiler không nhắc; JSON ra giống nhau)
 - Thiếu đăng ký DI thì lỗi lúc nào? (build C# vẫn qua; ở Development lỗi ngay khi `builder.Build()` nhờ `ValidateOnBuild`; môi trường khác có thể chỉ lỗi khi có request cần service đó)
@@ -139,10 +141,12 @@
 - Client đã cầm token gốc thì hash refresh token trong DB để làm gì? (chống **lộ DB** — mất mọi tài khoản cùng lúc; trộm token từ client thì chống bằng lớp khác: hạn ngắn, rotation, thu hồi, cookie HttpOnly)
 - (19/10: tưởng cần → tóm tắt lại đúng, lần 1) `/auth/refresh` có cần access token không? (không — refresh được gọi đúng lúc access token hết hạn; bằng chứng danh tính là chính refresh token)
 - (19/10: tóm tắt lại đúng, lần 1) Refresh token rotation khi 2 tab cùng gửi 1 token thì sao? (race: cả hai tìm thấy, bên lưu sau xóa dòng đã mất → `DbUpdateConcurrencyException` → trả 401; chỉ một bên thắng)
-- ⚠️ (19/10: trả lời chung chung "payload + signature + header") Server kiểm tra những gì trên JWT? (chữ ký bằng Jwt:Key → chưa bị sửa; issuer; audience; hạn `exp`)
+- ⚠️ (19/10: chung chung → cuối buổi đủ 4 thứ, lần 1) Server kiểm tra những gì trên JWT? (chữ ký bằng Jwt:Key → chưa bị sửa; issuer; audience; hạn `exp`)
 - Đổi Role trong DB thì token cũ có quyền mới ngay không? (không — role nằm trong token, server không hỏi DB; phải đợi refresh lấy token mới; đánh đổi của JWT, lý do access token hạn ngắn)
 - `UseAuthentication` trước hay sau `UseAuthorization`? (trước — biết là ai rồi mới xét quyền)
 - Vì sao 401/403 trả đúng mã mà `ConflictException` lại ra 500? (401/403 do middleware xác thực/phân quyền tự tạo response trước khi tới controller; exception ném trong handler thì chưa ai đổi thành mã HTTP → 500, cần middleware xử lý lỗi)
-- ⚠️ (19/10: định ghi vào file seed) Mật khẩu admin seed để ở đâu? (không trong code/appsettings vì repo public; user-secrets ở máy dev, biến môi trường trên server; email không bí mật thì để appsettings)
+- ⚠️ (19/10: định ghi vào file seed → cuối buổi đúng hướng, lần 1) Mật khẩu admin seed để ở đâu? (không trong code/appsettings vì repo public; user-secrets ở máy dev, biến môi trường trên server; email không bí mật thì để appsettings)
 - Seed idempotent là gì? Vì sao seed chạy lúc khởi động mà không trong handler? (chạy nhiều lần kết quả như 1 lần — kiểm tra tồn tại trước; không ai gọi API để kích hoạt seed; fail fast)
 - Vì sao seed phải `CreateScope()`? (DbContext là Scoped, lúc khởi động chưa có request nên chưa có scope)
+- ⚠️ (19/10: chọn 401) Logout với token không tồn tại nên trả gì? (204 — idempotent: mục tiêu "token không dùng được" đã đạt; báo lỗi làm FE kẹt, bấm đúp bị lỗi vô lý)
+- `ExecuteDeleteAsync` khác `Remove` + `SaveChanges` thế nào? (chạy thẳng 1 câu DELETE, không đọc lên, không qua change tracker; xóa 0 dòng không lỗi)
