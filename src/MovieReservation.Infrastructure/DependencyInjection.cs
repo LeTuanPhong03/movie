@@ -23,7 +23,7 @@ public static class DependencyInjection
         services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
         // ITokenService → JwtTokenService
         services.AddScoped<ITokenService, JwtTokenService>();
-        // TimeProvider 
+        // TimeProvider
         services.AddSingleton(TimeProvider.System);
         return services;
     }

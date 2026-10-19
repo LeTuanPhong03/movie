@@ -5,12 +5,11 @@
 
 ## 📍 Hôm nay học gì
 
-**Cập nhật lần cuối:** 18/10/2026
+**Cập nhật lần cuối:** 19/10/2026
 
 **Bước tiếp theo:**
-1. **Bài 8 — Auth (việc của 19/10, làm sớm):** đang ở bước 5c/8 — Register chạy được (controller + Swagger xong). Tiếp: người học tự gọi register qua Swagger, kiểm tra DB, thử đăng ký trùng email (đoán mã HTTP), làm thí nghiệm xóa `TimeProvider`; rồi commit; sau đó validator (FluentValidation), Login handler; (`TimeProvider.System`, `IPasswordHasher`, `ITokenService`, MediatR), viết `RegisterCommandHandler`, validator, controller `AuthController`. Bước 4 (bảng RefreshTokens + JwtTokenService) đã xong. Lộ trình: (1) AuthN/AuthZ, JWT ✅ → (2) `RegisterCommand` trả `AuthResponse` → (3) `IPasswordHasher` + BCrypt → (4) `ITokenService` + entity `RefreshToken` + migration → (5) handler Register/Login trả token → (6) `RefreshTokenCommand` rotation (xóa token cũ) → (7) `AddAuthentication` + `AdminOnly` + Swagger → (8) seed admin, kiểm tra 401/403
-2. **Hẹn thử nghiệm (khi handler Register chạy được qua Swagger):** cố tình xóa `services.AddSingleton(TimeProvider.System)` → gọi `/auth/register` → xem lỗi `Unable to resolve service for type 'System.TimeProvider'` → thêm lại. Mục đích: thấy "build qua ≠ DI đủ"; `IConfiguration` thì ASP.NET tự đăng ký
-3. Tham khảo code Project 1 tại `D:\hoc\HocCS\E-Commerce-API\Ecommerce` (JwtTokenGenerator, BCryptPasswordHasher, LoginCommandHandler) — tái dùng có chỉnh, không copy nguyên xi
+1. **Bài 8 còn lại (việc của 19/10):** validator FluentValidation cho Register (email hợp lệ, mật khẩu đủ mạnh và ≤ 72 byte vì BCrypt, `ConfirmPassword` khớp, `FullName` không rỗng) + `ValidationBehavior` → Login (email chuẩn hóa giống Register) → Refresh (rotation, xóa token cũ) → `AddAuthentication` + `AdminOnly` + nút Authorize Swagger → seed admin, kiểm tra 401/403
+2. Tham khảo code Project 1 tại `D:\hoc\HocCS\E-Commerce-API\Ecommerce` (ValidationBehavior, LoginCommandValidator, cấu hình Swagger Authorize)
 
 ## 🔁 Cách ôn câu phỏng vấn
 
@@ -19,6 +18,7 @@
 - Câu trả lời sai hoặc ấp úng thì đánh dấu ⚠️ cạnh câu đó để hỏi lại hôm sau. Trả lời tốt 2 lần liền thì đánh dấu ✅.
 - Gợi ý trong ngoặc chỉ để tự kiểm tra, **không học thuộc**.
 - 17/10: ôn lần đầu cuối buổi. 3 câu: index leftmost prefix đúng; OnDelete và unique-vs-race còn thiếu ý (⚠️).
+- 18/10 (cuối buổi): 3 câu — `user.Id` sau `Add` đúng; đăng ký `IAppDbContext` đúng ý (diễn đạt "request mới cùng luồng" còn lẫn — lỗi nằm **trong cùng 1 request**); extension method đúng ý (nhớ: không thật sự sửa class, `this` đánh dấu kiểu được mở rộng, cần `using`). Cả 3 đúng lần 1.
 - 18/10 (đầu buổi): OnDelete đủ 2 ý (SetNull vì cột cho phép null + không xóa đơn để giữ lịch sử) → ✅. Kiểu khóa ngoại: đúng bước phát hiện (`migrations add`) nhưng chỉ nói "nhầm", chưa nêu luật. SHA-256 vs BCrypt: đúng vế mật khẩu, vế token nêu lý do phụ ("đổi nhiều lần") thay vì lý do chính (token ngẫu nhiên, không đoán được).
 - 17/10 (phiên 2, cuối buổi): 3 câu ⚠️ trong ngày — 401/403 đủ 2 vế; defaultValue đúng ý chính (còn mơ hồ chữ "các dòng cũ"); Infrastructure đúng ý nhưng chưa nêu tên Dependency Inversion. Cả 3 đúng lần 1.
 - 17/10 (phiên 2, đầu buổi): OnDelete — đặt SetNull **đúng chỗ** lần đầu, còn thiếu ý "thực tế không xóa đơn mà chuyển Cancelled". Unique-vs-race — nêu đúng race condition. Cả hai đúng lần 1, đúng thêm 1 lần nữa là ✅.
@@ -72,6 +72,8 @@
 | 18/10 | Bài 8 bước 5c-2: chuẩn bị handler | `user.Id` = 0 sau `Add`, chỉ có giá trị sau `SaveChangesAsync` (Postgres sinh, EF đọc lại); lưu 2 lần = 2 transaction → dữ liệu dở dang → dùng **navigation property** `RefreshToken.User` để EF tự điền khóa ngoại trong 1 lần `SaveChanges`. Migration cho navigation **rỗng** (navigation chỉ có trong C#) → gỡ bằng `migrations remove` (chỉ khi chưa `database update`). Học **primary constructor** (C# 12) | Đặt tên property `user` viết thường; còn 2 dòng `Property(...)` rỗng |
 | 18/10 | Bài 8 bước 5c-2: RegisterCommandHandler ✅ | Người học viết bản đầu; mentor sửa theo yêu cầu. Học: truyền record theo vị trí dễ đảo nhầm 2 tham số cùng kiểu (`Email`/`FullName` bị đảo, compiler không bắt) → dùng **named arguments**; API thiết kế cho FE dễ dùng → `AuthResponse` lồng `UserDto(Id, Email, FullName, Role)`; namespace phải khớp thư mục (`Common.Exceptions`) | Bản đầu **quên `Add`** → SaveChanges không lưu gì, Id = 0 ⚠️; quên `CreatedAt`, `Trim()`; summary ghi sai về primary constructor của class |
 | 18/10 | Bài 8 bước 5c-3: AuthController + Swagger | Mentor viết theo yêu cầu: đổi `Microsoft.AspNetCore.OpenApi` → Swashbuckle 10.2.3 (Swagger UI chỉ bật ở Development), xóa WeatherForecast, `AuthController(ISender)` mỏng — chỉ `sender.Send`; file `.http` mẫu gọi register. Học: `( )` vs `{ }` khi `new`. Đã kiểm tra `/swagger` trả 200 | Chưa tự gọi register qua Swagger |
+| 19/10 | Bài 8: test Register ✅ | Gọi register thành công, `RefreshTokens.UserId` khớp `Users.Id` (EF điền FK qua navigation). Đăng ký trùng → 500 (tự giải thích đúng: chưa có middleware, mọi exception → 500; sẽ đổi `ConflictException` → 409 ngày 28/10). Xóa `TimeProvider` → app **lỗi ngay lúc khởi động**: ở Development, ASP.NET bật `ValidateOnBuild` kiểm tra đủ DI khi `Build()` | |
+| 19/10 | Bài 8: validator | Cài FluentValidation 12.1.1; viết `RegisterCommandValidator`; hiểu `ValidationBehavior` (generic cho mọi command, xin mọi `IValidator<TRequest>`, chạy hết, có lỗi thì ném `ValidationException`, không lỗi thì `next()` cho tới handler); file luật vs người kiểm tra; validator kiểm tra hình dạng (400), handler kiểm tra nghiệp vụ cần DB (409) | `ValidationBehavior` nhờ AI viết, chưa hiểu → đã giải thích từng dòng; **quên đăng ký** behavior + validator trong `AddApplication` ⚠️; lý do 72 ký tự nêu chưa đúng |
 
 ## 🎤 Câu phỏng vấn đã luyện
 
@@ -116,11 +118,15 @@
 - Thiết kế interface thế nào cho đúng? (đóng vai người dùng nó — handler — đi thử từng bước xem cần những gì; muốn trả nhiều giá trị thì gói vào record)
 - Repository pattern và dùng DbContext trực tiếp khác nhau thế nào? Project này chọn gì, vì sao? (DbContext đã là repository + unit of work; cần transaction và `ExecuteUpdate` có điều kiện cho chống double-booking; đánh đổi: Application phụ thuộc EF Core)
 - ⚠️ (18/10: chưa biết) `AppDbContext : DbContext, IAppDbContext` — vì sao không phải viết `SaveChangesAsync` mà vẫn build được? (kế thừa từ `DbContext` — method public có sẵn cũng tính là thỏa interface)
-- Extension method là gì? Vì sao gọi được `builder.Services.AddDbContext(...)`? (static method trong static class, tham số đầu có `this`; C# dịch thành `Class.Method(builder.Services, ...)`; để gắn method vào kiểu không sở hữu; LINQ cũng là extension method)
+- (18/10 cuối buổi: đúng lần 1) Extension method là gì? Vì sao gọi được `builder.Services.AddDbContext(...)`? (static method trong static class, tham số đầu có `this`; C# dịch thành `Class.Method(builder.Services, ...)`; để gắn method vào kiểu không sở hữu; LINQ cũng là extension method)
 - Singleton / Scoped / Transient khác nhau thế nào? DbContext dùng gì? (1 cho cả app / 1 mỗi request / mỗi lần xin; DbContext là Scoped)
-- Đăng ký `IAppDbContext` thế nào cho đúng? Vì sao không dùng `AddScoped<IAppDbContext, AppDbContext>()`? (dạng đó tạo DbContext thứ 2 trong cùng request; dùng factory `sp => sp.GetRequiredService<AppDbContext>()` để 2 tên trỏ về 1 object)
-- Sau `Add(user)` thì `user.Id` bằng bao nhiêu? Khi nào có Id? Muốn lưu cha + con cùng lúc thì làm sao? (0; sau `SaveChanges` vì DB sinh; gắn navigation `child.Parent = parent`, EF tự điền FK trong 1 transaction)
+- (18/10 cuối buổi: đúng lần 1, diễn đạt còn lẫn) Đăng ký `IAppDbContext` thế nào cho đúng? Vì sao không dùng `AddScoped<IAppDbContext, AppDbContext>()`? (dạng đó tạo DbContext thứ 2 trong cùng request; dùng factory `sp => sp.GetRequiredService<AppDbContext>()` để 2 tên trỏ về 1 object)
+- (18/10 cuối buổi: đúng lần 1) Sau `Add(user)` thì `user.Id` bằng bao nhiêu? Khi nào có Id? Muốn lưu cha + con cùng lúc thì làm sao? (0; sau `SaveChanges` vì DB sinh; gắn navigation `child.Parent = parent`, EF tự điền FK trong 1 transaction)
 - Navigation property có tạo cột trong DB không? (không — migration rỗng; chỉ khóa ngoại mới là cột)
 - ⚠️ (18/10: bản đầu quên `Add`) Chỉ gọi `SaveChangesAsync` mà không `Add` thì sao? (DbContext không theo dõi object → không INSERT gì, không báo lỗi)
 - Vì sao nên dùng named arguments khi tạo record nhiều tham số? (tham số cùng kiểu bị đảo thì compiler không bắt được)
 - `new X(...)` khác `new X { ... }` thế nào? (`( )` đưa giá trị vào constructor lúc tạo; `{ }` = gọi constructor rỗng rồi gán từng property — quên property thì thành giá trị mặc định, compiler không nhắc; JSON ra giống nhau)
+- Thiếu đăng ký DI thì lỗi lúc nào? (build C# vẫn qua; ở Development lỗi ngay khi `builder.Build()` nhờ `ValidateOnBuild`; môi trường khác có thể chỉ lỗi khi có request cần service đó)
+- Pipeline behavior của MediatR là gì? `ValidationBehavior` hoạt động thế nào? (trạm chạy trước mọi handler; lấy mọi validator của request, có lỗi thì ném, không thì `next()`; viết 1 lần dùng cho mọi command)
+- ⚠️ (19/10: nêu "nhanh hơn") Vì sao mật khẩu tối đa 72 ký tự? (BCrypt chỉ dùng 72 byte đầu, phần sau bị bỏ qua âm thầm)
+- Vì sao DB đã giới hạn độ dài mà vẫn cần validator? (DB lỗi → 500 khó hiểu, báo từng lỗi một; validator → 400 rõ ràng, báo mọi lỗi cùng lúc, chặn trước khi tốn công hash)
