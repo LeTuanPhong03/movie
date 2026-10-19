@@ -1,10 +1,13 @@
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using MovieReservation.Application.Common.Behaviors;
+using MovieReservation.Application.Features.Auth;
 
 namespace MovieReservation.Application;
+
 /// <summary>
-/// Extension method để đăng ký các dịch vụ của tầng Application vào DI.
+/// Đăng ký dịch vụ của tầng Application vào DI: MediatR (quét handler), ValidationBehavior,
+/// mọi validator, và AuthTokenIssuer (cấp token dùng chung cho Register/Login/Refresh).
 /// </summary>
 public static class DependencyInjection
 {
@@ -16,6 +19,7 @@ public static class DependencyInjection
             cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
         });
         services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
+        services.AddScoped<AuthTokenIssuer>();
         return services;
     }
 }

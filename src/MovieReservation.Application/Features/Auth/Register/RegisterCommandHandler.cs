@@ -15,21 +15,19 @@ namespace MovieReservation.Application.Features.Auth.Register;
 public class RegisterCommandHandler(
     IAppDbContext db,
     IPasswordHasher passwordHasher,
-    ITokenService tokenService,
-    TimeProvider timeProvider) : IRequestHandler<RegisterCommand, AuthResponse>
+    AuthTokenIssuer tokenIssuer) : IRequestHandler<RegisterCommand, AuthResponse>
 {
     public async Task<AuthResponse> Handle(RegisterCommand request, CancellationToken cancellationToken)
     {
-        // 1. Chuẩn hóa email: " Phong@Gmail.com" và "phong@gmail.com" là cùng một hộp thư
+        // Chuẩn hóa email: " Phong@Gmail.com" và "phong@gmail.com" là cùng một hộp thư
         var normalizedEmail = request.Email.Trim().ToLowerInvariant();
 
-        // 2. Email đã tồn tại
         if (await db.Users.AnyAsync(u => u.Email == normalizedEmail, cancellationToken))
         {
             throw new ConflictException("Email đã tồn tại.");
         }
 
-        // 3. Tạo User (người đăng ký luôn là Customer)
+        // Người đăng ký luôn là Customer, không cho client chọn Role
         var user = new User
         {
             FullName = request.FullName.Trim(),
@@ -37,30 +35,14 @@ public class RegisterCommandHandler(
             PasswordHash = passwordHasher.HashPassword(request.Password),
             Role = UserRole.Customer
         };
-
-        // 4. Refresh token gắn vào user qua navigation → EF tự điền UserId khi lưu
-        var refreshTokenResult = tokenService.GenerateRefreshToken();
-        var refreshToken = new RefreshToken
-        {
-            User = user,
-            TokenHash = refreshTokenResult.RefreshTokenHash,
-            ExpiresAt = refreshTokenResult.ExpiresAt,
-            CreatedAt = timeProvider.GetUtcNow().UtcDateTime
-        };
-
-        // 5. Lưu một lần = một transaction: User và RefreshToken cùng thành công hoặc cùng thất bại
         db.Users.Add(user);
-        db.RefreshTokens.Add(refreshToken);
+
+        // Refresh token gắn vào user qua navigation → EF tự điền UserId.
+        // Lưu một lần = một transaction: User và RefreshToken cùng thành công hoặc cùng thất bại.
+        var refreshToken = tokenIssuer.AddRefreshToken(user);
         await db.SaveChangesAsync(cancellationToken);
 
-        // 6. Sau SaveChanges user.Id mới có giá trị → giờ mới sinh access token
-        var accessTokenResult = tokenService.GenerateAccessToken(user);
-
-        // 7. Trả kết quả
-        return new AuthResponse(
-            User: new UserDto(user.Id, user.Email, user.FullName, user.Role.ToString()),
-            AccessToken: accessTokenResult.AccessToken,
-            RefreshToken: refreshTokenResult.RefreshToken,
-            AccessTokenExpiresAt: accessTokenResult.ExpiresAt);
+        // Sau SaveChanges user.Id mới có giá trị → giờ mới sinh access token
+        return tokenIssuer.CreateResponse(user, refreshToken);
     }
 }

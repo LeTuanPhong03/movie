@@ -8,7 +8,7 @@
 **Cập nhật lần cuối:** 19/10/2026
 
 **Bước tiếp theo:**
-1. **Bài 8 còn lại (việc của 19/10):** validator FluentValidation cho Register (email hợp lệ, mật khẩu đủ mạnh và ≤ 72 byte vì BCrypt, `ConfirmPassword` khớp, `FullName` không rỗng) + `ValidationBehavior` → Login (email chuẩn hóa giống Register) → Refresh (rotation, xóa token cũ) → `AddAuthentication` + `AdminOnly` + nút Authorize Swagger → seed admin, kiểm tra 401/403
+1. **Bài 8 còn lại:** Register/Login/Refresh + validator xong. Còn: (7) `AddAuthentication` (JwtBearer, kiểm tra chữ ký/issuer/audience/hạn) + policy `AdminOnly` + nút Authorize trên Swagger → (8) seed admin từ config (mật khẩu ở user-secrets), endpoint thử chỉ Admin gọi được, kiểm tra 401 (không token) / 403 (token Customer). Sau đó tick PLAN 19/10
 2. Tham khảo code Project 1 tại `D:\hoc\HocCS\E-Commerce-API\Ecommerce` (ValidationBehavior, LoginCommandValidator, cấu hình Swagger Authorize)
 
 ## 🔁 Cách ôn câu phỏng vấn
@@ -75,6 +75,7 @@
 | 19/10 | Bài 8: test Register ✅ | Gọi register thành công, `RefreshTokens.UserId` khớp `Users.Id` (EF điền FK qua navigation). Đăng ký trùng → 500 (tự giải thích đúng: chưa có middleware, mọi exception → 500; sẽ đổi `ConflictException` → 409 ngày 28/10). Xóa `TimeProvider` → app **lỗi ngay lúc khởi động**: ở Development, ASP.NET bật `ValidateOnBuild` kiểm tra đủ DI khi `Build()` | |
 | 19/10 | Bài 8: validator | Cài FluentValidation 12.1.1; viết `RegisterCommandValidator`; hiểu `ValidationBehavior` (generic cho mọi command, xin mọi `IValidator<TRequest>`, chạy hết, có lỗi thì ném `ValidationException`, không lỗi thì `next()` cho tới handler); file luật vs người kiểm tra; validator kiểm tra hình dạng (400), handler kiểm tra nghiệp vụ cần DB (409) | `ValidationBehavior` nhờ AI viết, chưa hiểu → đã giải thích từng dòng; **quên đăng ký** behavior + validator trong `AddApplication` ⚠️; lý do 72 ký tự nêu chưa đúng |
 | 19/10 | Bài 8: Login | Tự viết `LoginCommand`/validator/handler/endpoint; báo lỗi chung chống user enumeration; Login không kiểm tra độ dài mật khẩu; 401 vs 403 áp dụng đúng (→ ✅); chọn named arguments (đảo thứ tự được) — biết thêm cách `required init` | Quên `using` EF (extension method); truyền `AuthResponse` sai vị trí + truyền entity thay `UserDto`; ném nhầm `UnauthorizedAccessException` (.NET); **có `Add` nhưng quên `SaveChangesAsync`** ⚠️ (ngược lỗi hôm qua); namespace lệch thư mục |
+| 19/10 | Bài 8: Refresh + gom code ✅ | Người học trả lời 5 câu thiết kế rồi mentor code (theo yêu cầu tăng tốc): `AuthTokenIssuer` gom phần cấp token (AddRefreshToken → SaveChanges → CreateResponse) dùng cho Register/Login/Refresh; `RefreshTokenCommand` rotation (hash → tìm → kiểm tra hạn → Remove cũ + Add mới trong 1 SaveChanges); bắt `DbUpdateConcurrencyException` khi 2 request dùng cùng 1 token → 401. Test bằng curl: register, login email viết hoa, refresh 200, dùng lại token cũ bị từ chối, token mới dùng được; DB đúng 2 token | Câu 4: tưởng `/refresh` cần access token ⚠️ (gọi refresh chính là lúc access token hết hạn); câu 5: chưa biết 2 tab dùng chung 1 token → race |
 
 ## 🎤 Câu phỏng vấn đã luyện
 
@@ -134,3 +135,5 @@
 - Login sai nên báo chung hay riêng "email không tồn tại" / "sai mật khẩu"? (chung — chống **user enumeration**; nâng cao: thời gian phản hồi cũng có thể lộ — timing attack; endpoint register báo "email đã tồn tại" là đánh đổi chấp nhận được)
 - Vì sao validator của Login không kiểm tra độ dài/định dạng mật khẩu? (luật đăng ký có thể đổi; người dùng cũ với mật khẩu theo luật cũ sẽ bị khóa ngoài; Login chỉ cần so với hash)
 - Client đã cầm token gốc thì hash refresh token trong DB để làm gì? (chống **lộ DB** — mất mọi tài khoản cùng lúc; trộm token từ client thì chống bằng lớp khác: hạn ngắn, rotation, thu hồi, cookie HttpOnly)
+- ⚠️ (19/10: tưởng cần) `/auth/refresh` có cần access token không? (không — refresh được gọi đúng lúc access token hết hạn; bằng chứng danh tính là chính refresh token)
+- Refresh token rotation khi 2 tab cùng gửi 1 token thì sao? (race: cả hai tìm thấy, bên lưu sau xóa dòng đã mất → `DbUpdateConcurrencyException` → trả 401; chỉ một bên thắng)

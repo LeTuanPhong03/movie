@@ -1,18 +1,18 @@
 using FluentValidation;
 
 namespace MovieReservation.Application.Features.Auth.Login;
-/// <summary>
-/// Validator cho LoginCommand, sử dụng FluentValidation.
-/// </summary>
 
+/// <summary>
+/// Luật đầu vào của đăng nhập: chỉ bắt buộc có email và mật khẩu.
+/// Không kiểm tra độ dài/định dạng mật khẩu vì luật đăng ký có thể đổi, người dùng cũ vẫn phải đăng nhập được.
+/// </summary>
 public class LoginCommandValidator : AbstractValidator<LoginCommand>
 {
     public LoginCommandValidator()
     {
         RuleFor(x => x.Email)
-            .NotEmpty().WithMessage("Email bắt buộc phải nhập.")
-            .EmailAddress().WithMessage("Email không hợp lệ.");
+            .NotEmpty().WithMessage("Email bắt buộc phải nhập.");
         RuleFor(x => x.Password)
-            .NotEmpty().WithMessage("Password bắt buộc phải nhập.");
+            .NotEmpty().WithMessage("Mật khẩu bắt buộc phải nhập.");
     }
 }
