@@ -11,3 +11,13 @@ Content-Type: application/json
 }
 
 ###
+
+POST {{MovieReservation.Api_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "Phong@Gmail.com",
+  "password": "MatKhau123!"
+}
+
+###

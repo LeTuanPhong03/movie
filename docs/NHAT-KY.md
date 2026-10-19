@@ -74,6 +74,7 @@
 | 18/10 | Bài 8 bước 5c-3: AuthController + Swagger | Mentor viết theo yêu cầu: đổi `Microsoft.AspNetCore.OpenApi` → Swashbuckle 10.2.3 (Swagger UI chỉ bật ở Development), xóa WeatherForecast, `AuthController(ISender)` mỏng — chỉ `sender.Send`; file `.http` mẫu gọi register. Học: `( )` vs `{ }` khi `new`. Đã kiểm tra `/swagger` trả 200 | Chưa tự gọi register qua Swagger |
 | 19/10 | Bài 8: test Register ✅ | Gọi register thành công, `RefreshTokens.UserId` khớp `Users.Id` (EF điền FK qua navigation). Đăng ký trùng → 500 (tự giải thích đúng: chưa có middleware, mọi exception → 500; sẽ đổi `ConflictException` → 409 ngày 28/10). Xóa `TimeProvider` → app **lỗi ngay lúc khởi động**: ở Development, ASP.NET bật `ValidateOnBuild` kiểm tra đủ DI khi `Build()` | |
 | 19/10 | Bài 8: validator | Cài FluentValidation 12.1.1; viết `RegisterCommandValidator`; hiểu `ValidationBehavior` (generic cho mọi command, xin mọi `IValidator<TRequest>`, chạy hết, có lỗi thì ném `ValidationException`, không lỗi thì `next()` cho tới handler); file luật vs người kiểm tra; validator kiểm tra hình dạng (400), handler kiểm tra nghiệp vụ cần DB (409) | `ValidationBehavior` nhờ AI viết, chưa hiểu → đã giải thích từng dòng; **quên đăng ký** behavior + validator trong `AddApplication` ⚠️; lý do 72 ký tự nêu chưa đúng |
+| 19/10 | Bài 8: Login | Tự viết `LoginCommand`/validator/handler/endpoint; báo lỗi chung chống user enumeration; Login không kiểm tra độ dài mật khẩu; 401 vs 403 áp dụng đúng (→ ✅); chọn named arguments (đảo thứ tự được) — biết thêm cách `required init` | Quên `using` EF (extension method); truyền `AuthResponse` sai vị trí + truyền entity thay `UserDto`; ném nhầm `UnauthorizedAccessException` (.NET); **có `Add` nhưng quên `SaveChangesAsync`** ⚠️ (ngược lỗi hôm qua); namespace lệch thư mục |
 
 ## 🎤 Câu phỏng vấn đã luyện
 
@@ -101,7 +102,7 @@
 - ⚠️ (ôn 17/10: thiếu ý race condition → phiên 2: đúng lần 1) Vì sao code đã kiểm tra trùng rồi mà DB vẫn cần unique? (2 request cùng lúc đều kiểm tra "chưa có" → race condition)
 - Integration test khác unit test thế nào? Vì sao dùng Testcontainers mà không dùng EF InMemory? (InMemory không có unique, FK, lock → test concurrency luôn pass dù code sai)
 - Vì sao tên test nên dài, mô tả rõ? (test đỏ thì đọc tên là biết luật nào bị vỡ, không cần mở code)
-- ⚠️ (17/10: quên vế 401 → cuối buổi đúng đủ, lần 1) Authentication khác Authorization thế nào? Khi nào trả 401, khi nào 403? (không có token/token sai → 401; có token hợp lệ nhưng không đủ quyền → 403)
+- ✅ (17/10: quên vế 401 → cuối buổi đúng → 19/10 áp dụng đúng cho login sai = 401) Authentication khác Authorization thế nào? Khi nào trả 401, khi nào 403? (không có token/token sai → 401; có token hợp lệ nhưng không đủ quyền → 403)
 - JWT gồm mấy phần? Vì sao không để `PasswordHash` (hay dữ liệu nhạy cảm) trong payload? (payload chỉ là base64, ai cầm token cũng đọc được; chữ ký đã chứng minh danh tính nên request thường không cần hash)
 - Vì sao API đăng ký không cho client gửi `Role`? (client tự gửi `Admin` là leo quyền — privilege escalation; Admin chỉ seed hoặc do admin cấp)
 - Vì sao không trả entity ra ngoài API? (lộ cột nhạy cảm như `PasswordHash`, client bị buộc chặt vào cấu trúc DB)
@@ -123,10 +124,13 @@
 - (18/10 cuối buổi: đúng lần 1, diễn đạt còn lẫn) Đăng ký `IAppDbContext` thế nào cho đúng? Vì sao không dùng `AddScoped<IAppDbContext, AppDbContext>()`? (dạng đó tạo DbContext thứ 2 trong cùng request; dùng factory `sp => sp.GetRequiredService<AppDbContext>()` để 2 tên trỏ về 1 object)
 - (18/10 cuối buổi: đúng lần 1) Sau `Add(user)` thì `user.Id` bằng bao nhiêu? Khi nào có Id? Muốn lưu cha + con cùng lúc thì làm sao? (0; sau `SaveChanges` vì DB sinh; gắn navigation `child.Parent = parent`, EF tự điền FK trong 1 transaction)
 - Navigation property có tạo cột trong DB không? (không — migration rỗng; chỉ khóa ngoại mới là cột)
-- ⚠️ (18/10: bản đầu quên `Add`) Chỉ gọi `SaveChangesAsync` mà không `Add` thì sao? (DbContext không theo dõi object → không INSERT gì, không báo lỗi)
+- ⚠️ (18/10: quên `Add`; 19/10: quên `SaveChanges`) `Add` và `SaveChangesAsync` mỗi cái làm gì, thiếu một trong hai thì sao? Chỉ gọi `SaveChangesAsync` mà không `Add` thì sao? (DbContext không theo dõi object → không INSERT gì, không báo lỗi)
 - Vì sao nên dùng named arguments khi tạo record nhiều tham số? (tham số cùng kiểu bị đảo thì compiler không bắt được)
 - `new X(...)` khác `new X { ... }` thế nào? (`( )` đưa giá trị vào constructor lúc tạo; `{ }` = gọi constructor rỗng rồi gán từng property — quên property thì thành giá trị mặc định, compiler không nhắc; JSON ra giống nhau)
 - Thiếu đăng ký DI thì lỗi lúc nào? (build C# vẫn qua; ở Development lỗi ngay khi `builder.Build()` nhờ `ValidateOnBuild`; môi trường khác có thể chỉ lỗi khi có request cần service đó)
 - Pipeline behavior của MediatR là gì? `ValidationBehavior` hoạt động thế nào? (trạm chạy trước mọi handler; lấy mọi validator của request, có lỗi thì ném, không thì `next()`; viết 1 lần dùng cho mọi command)
 - ⚠️ (19/10: nêu "nhanh hơn") Vì sao mật khẩu tối đa 72 ký tự? (BCrypt chỉ dùng 72 byte đầu, phần sau bị bỏ qua âm thầm)
 - Vì sao DB đã giới hạn độ dài mà vẫn cần validator? (DB lỗi → 500 khó hiểu, báo từng lỗi một; validator → 400 rõ ràng, báo mọi lỗi cùng lúc, chặn trước khi tốn công hash)
+- Login sai nên báo chung hay riêng "email không tồn tại" / "sai mật khẩu"? (chung — chống **user enumeration**; nâng cao: thời gian phản hồi cũng có thể lộ — timing attack; endpoint register báo "email đã tồn tại" là đánh đổi chấp nhận được)
+- Vì sao validator của Login không kiểm tra độ dài/định dạng mật khẩu? (luật đăng ký có thể đổi; người dùng cũ với mật khẩu theo luật cũ sẽ bị khóa ngoài; Login chỉ cần so với hash)
+- Client đã cầm token gốc thì hash refresh token trong DB để làm gì? (chống **lộ DB** — mất mọi tài khoản cùng lúc; trộm token từ client thì chống bằng lớp khác: hạn ngắn, rotation, thu hồi, cookie HttpOnly)
