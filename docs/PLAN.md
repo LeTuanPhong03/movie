@@ -102,7 +102,7 @@ GHẾ  (ShowtimeSeat): Available → Held → Booked
 - ⏱️ Thêm refresh token tốn khoảng +½–1 ngày → nếu tràn thì dùng Buffer #1 (25/10).
 
 ### T3 20/10 — Theater + Movie
-- [ ] `CreateTheaterCommand` kèm sơ đồ ghế (rows, seatsPerRow, tự sinh `Seat`)
+- [x] `CreateTheaterCommand` kèm sơ đồ ghế (rows, seatsPerRow, tự sinh `Seat`) ✅ 20/10
 - [ ] `Create/Update/DeleteMovieCommand`, `GetMoviesQuery` (phân trang cơ bản)
 - [ ] Validator cho từng command
 - **Xong khi:** CRUD Movie hoạt động và chỉ Admin ghi được.
@@ -252,6 +252,13 @@ Cắt theo thứ tự từ trên xuống:
 3. Deploy "sớm" ngày 23/10 (gộp vào 6/11, nhưng rủi ro cao hơn)
 
 **Không bao giờ cắt:** test concurrency, giữ ghế/hết hạn, deploy public, README.
+
+## 🌱 Tính năng tương lai (dư thời gian mới làm)
+
+- [ ] **Viết đặc tả nghiệp vụ chi tiết** (đề xuất 20/10 — mô tả hiện tại quá sơ sài): với từng entity ghi rõ thao tác nào cần (CRUD đủ hay không), ai được làm, luật kèm theo. Câu hỏi đã nêu cần trả lời trong đặc tả:
+  - Theater: xóa phòng đã có suất chiếu thì sao (Showtime `Restrict`, Seat `Cascade`)? Có cho đổi sơ đồ ghế khi đã có vé đặt không? Có cho đổi tên không?
+  - Auth/Account: đổi mật khẩu, sửa họ tên, admin cấp quyền cho user khác?
+- [ ] **Ghế VIP / loại ghế** (đề xuất 20/10): enum `SeatType` (Standard/Vip) trên `Seat`; input tạo phòng có `vipRows`; giá ghế = `Showtime.Price` × hệ số theo loại; `TotalPrice` vẫn là snapshot. Lý do để sau: xem `decisions.md` mục 4.
 
 ## 📈 Theo dõi tiến độ
 

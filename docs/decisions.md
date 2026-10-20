@@ -21,3 +21,12 @@
 - Application phụ thuộc thư viện EF Core (không phụ thuộc project Infrastructure — dependency rule vẫn giữ). EF Core bản thân đã là repository + unit of work, nên không bọc thêm một lớp nữa.
 - Khó unit test handler → test handler bằng **integration test với Postgres thật (Testcontainers)**, vốn là cách project đã chọn để test concurrency.
 - Đổi ORM khó hơn → project không có kế hoạch đổi ORM.
+# 4. Ghế VIP: để sau, v1 mọi ghế cùng giá (20/10)
+
+**Bối cảnh:** rạp thật có ghế thường và ghế VIP với giá khác nhau. Người học đề xuất khi thiết kế `CreateTheaterCommand`.
+
+**Quyết định:** v1 **mọi ghế trong một suất chiếu cùng giá** (`Showtime.Price`). Ghi vào mục "Tính năng tương lai" trong `PLAN.md`.
+
+**Lý do:** yêu cầu gốc (roadmap.sh) không đòi; thêm loại ghế kéo theo sửa `Seat`, input tạo phòng, cách tính giá và ERD (~nửa ngày) trong khi deadline 15/11 và trọng tâm là chống double-booking.
+
+**Thiết kế hiện tại vẫn mở rộng được:** thêm cột `SeatType` vào `Seat` bằng một migration (`defaultValue` = Standard cho ghế cũ); `TotalPrice` đã là snapshot nên đơn cũ không bị ảnh hưởng khi đổi cách tính giá.

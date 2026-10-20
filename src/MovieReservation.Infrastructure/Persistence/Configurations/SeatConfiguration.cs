@@ -11,7 +11,7 @@ public class SeatConfiguration : IEntityTypeConfiguration<Seat>
         builder.Property(s => s.Row)
             .HasMaxLength(5);
         builder.HasOne<Theater>()
-            .WithMany()
+            .WithMany(t => t.Seats)
             .HasForeignKey(s => s.TheaterId)
             .OnDelete(DeleteBehavior.Cascade);
         // Trong 1 phòng không có 2 ghế cùng hàng, cùng số (vd: 2 ghế "A5")

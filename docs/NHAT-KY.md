@@ -5,11 +5,13 @@
 
 ## 📍 Hôm nay học gì
 
-**Cập nhật lần cuối:** 19/10/2026 (cuối buổi)
+**Cập nhật lần cuối:** 20/10/2026 (đang học Bài 9a)
 
 **Bước tiếp theo:**
-1. **Bài 9 — Theater + Movie (việc của 20/10):** `CreateTheaterCommand` kèm sơ đồ ghế (rows, seatsPerRow → tự sinh `Seat`), `Create/Update/DeleteMovieCommand`, `GetMoviesQuery` phân trang cơ bản, validator, chỉ Admin ghi được (`AdminOnly`)
-2. Tham khảo code Project 1 tại `D:\hoc\HocCS\E-Commerce-API\Ecommerce` (ValidationBehavior, LoginCommandValidator, cấu hình Swagger Authorize)
+1. Commit Bài 9a (người học tự gõ)
+2. **Bài 9b — Movie:** `Create/Update/DeleteMovieCommand`, `GetMoviesQuery` phân trang cơ bản, validator, chỉ Admin ghi (`AdminOnly`). Hỏi luồng trước, CRUD thì mentor code khi được bảo
+3. **Nợ:** `GET /api/theaters/{id}` (Location đang trỏ tới endpoint chưa có) → khi làm thì đổi sang `CreatedAtAction`
+4. Tham khảo code Project 1 tại `D:\hoc\HocCS\E-Commerce-API\Ecommerce`
 
 ## 🔁 Cách ôn câu phỏng vấn
 
@@ -17,6 +19,7 @@
 - Cuối mỗi buổi, mentor hỏi **2–3 câu ngẫu nhiên** (ưu tiên câu cũ). Trả lời bằng lời của mình, không nhìn tài liệu.
 - Câu trả lời sai hoặc ấp úng thì đánh dấu ⚠️ cạnh câu đó để hỏi lại hôm sau. Trả lời tốt 2 lần liền thì đánh dấu ✅.
 - Gợi ý trong ngoặc chỉ để tự kiểm tra, **không học thuộc**.
+- 20/10 (đầu buổi): mật khẩu admin đúng (thiếu vế server → biến môi trường) → ✅; Add vs SaveChanges đúng (trả 0, không lỗi) → ✅; 72 ký tự **sai** (nói "quay về từ đầu" — thật ra phần sau 72 **byte** bị bỏ qua âm thầm) → giữ ⚠️.
 - 17/10: ôn lần đầu cuối buổi. 3 câu: index leftmost prefix đúng; OnDelete và unique-vs-race còn thiếu ý (⚠️).
 - 19/10 (cuối buổi): 3 câu ⚠️ trong ngày — JWT 4 thứ đúng (issuer/audience giải thích còn mơ hồ); Add vs SaveChanges đúng (ghi rõ: "không báo lỗi"); secret qua biến môi trường đúng (lý do: appsettings được commit lên repo public, không phải "lộ khi deploy"). Cả 3 đúng lần 1.
 - 18/10 (cuối buổi): 3 câu — `user.Id` sau `Add` đúng; đăng ký `IAppDbContext` đúng ý (diễn đạt "request mới cùng luồng" còn lẫn — lỗi nằm **trong cùng 1 request**); extension method đúng ý (nhớ: không thật sự sửa class, `this` đánh dấu kiểu được mở rộng, cần `using`). Cả 3 đúng lần 1.
@@ -80,6 +83,10 @@
 | 19/10 | Bài 8 bước 7: JWT + AdminOnly ✅ | Tự code: package JwtBearer (Api), `AddAuthentication().AddJwtBearer` kiểm tra chữ ký/issuer/audience/hạn + `ClockSkew` 30s, policy `AdminOnly` (`RequireRole`), Swagger Authorize, `UseAuthentication` trước `UseAuthorization`, `AccountController` (`/me`, `/admin-only`). Test: không token → 401, token Customer → 403, `/me` → 200. Hiểu `Add...` (đăng ký) vs `Use...` (đặt trạm); `AddPolicy(tên, Action<builder>)`; tên tham số lambda tự đặt vs tên property cố định; 401/403 do middleware tự trả (khác 500 của exception trong handler) | Gọi nhầm `AddBearerToken` thay `AddJwtBearer` (IntelliSense) |
 | 19/10 | Bài 8 bước 8: seed admin ✅ — **Bài 8 xong** | Người học trả lời 3 câu, mentor code `AdminSeeder` (Infrastructure): email ở appsettings `Admin:Email`, mật khẩu ở user-secrets/biến môi trường `Admin:Password`, idempotent (có rồi thì bỏ qua), thiếu cấu hình thì log cảnh báo; Program.cs tạo scope riêng để chạy lúc khởi động. Test: login admin → `/admin-only` 200, chạy lần 2 không tạo lại | Định để mật khẩu admin trong file seed ⚠️ (repo public → lộ) |
 | 19/10 | Bài 8: Logout ✅ | Người học phát hiện thiếu logout; trả lời 3 câu (không cần access token ✅, token không tồn tại → ban đầu chọn 401 ⚠️ — đúng là 204 vì idempotent, thiết bị khác không bị ảnh hưởng ✅); mentor code `LogoutCommand` dùng `ExecuteDeleteAsync` (1 câu DELETE, xóa 0 dòng không lỗi). Test: logout 204, logout lần 2 vẫn 204, token đã logout không refresh được, token điện thoại vẫn refresh 200 | |
+| 20/10 | Bài 9a: thiết kế CreateTheater | Hỏi ngoài lề: hệ thống dùng **RBAC** + cần kiểm tra chủ sở hữu cho dữ liệu cá nhân. Trả lời 4 câu: navigation ✅, 409 ✅, 201 ✅; chọn `Theater.Seats` (cha → con) và hiểu chiều navigation chọn theo **truy vấn bắt đầu từ đâu**, không phải vì Id. Đề xuất ghế VIP → quyết định để sau (`decisions.md` mục 4, PLAN mục Tính năng tương lai). Chốt nguyên tắc: **người học tự code**, mentor chỉ code khi được bảo | Giới hạn rows/seatsPerRow chỉ nói "> 0, do admin quyết" ⚠️ — validator cần giới hạn trên để chặn gõ nhầm (rows ≤ 26 vì tên hàng A–Z); đoán sai lý do `RefreshToken.User` |
+| 20/10 | Bài 9a bước 1–2a: Theater ✅ | Tự viết `Theater.Seats` kiểu đóng gói (`private readonly List` + `IReadOnlyCollection`, học từ Project 1) — hiểu `=>` là `get`, chỉ có 1 list; sửa `WithMany(t => t.Seats)`, migration rỗng → `migrations remove`, `git restore` snapshot. Tự viết `GenerateSeats` với guard (đã có ghế → `InvalidOperationException`, rows 1–`MaxRows`, seatsPerRow 1–`MaxSeatsPerRow`), `(char)('A' + row)`, hằng dùng chung cho validator | Dùng `ArgumentOutOfRangeException("thông báo")` — chuỗi đó là **paramName** ⚠️ (xem IntelliSense tên tham số); `TheaterId = this.Id` (= 0, thừa); quên guard "đã có ghế" 2 lượt; bỏ mất giới hạn 50 khi sửa; comment ghi 100 trong khi code 50 |
+| 20/10 | Bài 9a bước 2b: command/validator/handler ✅ | Người học trả lời luồng, mentor code (CRUD — theo yêu cầu). Luồng request đúng (thiếu trạm auth middleware 401/403 trước controller); fail fast: kiểm tra trùng trước vì rẻ; `TotalSeats` = `Seats.Count` (nguồn sự thật, không tính lại công thức); tên phòng **lưu nguyên, so sánh `ToLower()`** (khác email: tên để hiển thị) — đánh đổi: unique index DB vẫn phân biệt hoa/thường | Câu 2: tưởng `GenerateSeats` sẽ chặn phòng trùng tên ⚠️ (guard chỉ thấy `_seats` của object mới, không biết DB); định `ToLower` khi lưu |
+| 20/10 | Bài 9a: TheatersController + test ✅ — **9a xong** | Mentor code controller (`[Authorize]` class + `AdminOnly` method → secure by default; `Created` 201 + `Location`). Người học đoán trước 6 ca, đúng 5: 401 / 403 / 201 / validation 500 (chưa middleware). DB: 150 ghế, 3 ghế cuối J15–J13. Học: REST collection vs `/{id}`, sequence Postgres nhảy cóc (Id = 3). Đề xuất viết **đặc tả nghiệp vụ chi tiết** sau (PLAN Tính năng tương lai); hiện theo PLAN: Theater chỉ Create | Đoán ca trùng tên ra 409, trong khi chính mình nói exception trong handler → 500 ⚠️ (chưa áp dụng nhất quán) |
 
 ## 🎤 Câu phỏng vấn đã luyện
 
@@ -129,12 +136,12 @@
 - (18/10 cuối buổi: đúng lần 1, diễn đạt còn lẫn) Đăng ký `IAppDbContext` thế nào cho đúng? Vì sao không dùng `AddScoped<IAppDbContext, AppDbContext>()`? (dạng đó tạo DbContext thứ 2 trong cùng request; dùng factory `sp => sp.GetRequiredService<AppDbContext>()` để 2 tên trỏ về 1 object)
 - (18/10 cuối buổi: đúng lần 1) Sau `Add(user)` thì `user.Id` bằng bao nhiêu? Khi nào có Id? Muốn lưu cha + con cùng lúc thì làm sao? (0; sau `SaveChanges` vì DB sinh; gắn navigation `child.Parent = parent`, EF tự điền FK trong 1 transaction)
 - Navigation property có tạo cột trong DB không? (không — migration rỗng; chỉ khóa ngoại mới là cột)
-- ⚠️ (18/10: quên `Add`; 19/10: quên `SaveChanges` → cuối buổi giải thích đúng, lần 1) `Add` và `SaveChangesAsync` mỗi cái làm gì, thiếu một trong hai thì sao? Chỉ gọi `SaveChangesAsync` mà không `Add` thì sao? (DbContext không theo dõi object → không INSERT gì, không báo lỗi)
+- ✅ (18/10: quên `Add`; 19/10: quên `SaveChanges` → cuối buổi đúng → 20/10 đúng) `Add` và `SaveChangesAsync` mỗi cái làm gì, thiếu một trong hai thì sao? Chỉ gọi `SaveChangesAsync` mà không `Add` thì sao? (DbContext không theo dõi object → không INSERT gì, không báo lỗi)
 - Vì sao nên dùng named arguments khi tạo record nhiều tham số? (tham số cùng kiểu bị đảo thì compiler không bắt được)
 - `new X(...)` khác `new X { ... }` thế nào? (`( )` đưa giá trị vào constructor lúc tạo; `{ }` = gọi constructor rỗng rồi gán từng property — quên property thì thành giá trị mặc định, compiler không nhắc; JSON ra giống nhau)
 - Thiếu đăng ký DI thì lỗi lúc nào? (build C# vẫn qua; ở Development lỗi ngay khi `builder.Build()` nhờ `ValidateOnBuild`; môi trường khác có thể chỉ lỗi khi có request cần service đó)
 - Pipeline behavior của MediatR là gì? `ValidationBehavior` hoạt động thế nào? (trạm chạy trước mọi handler; lấy mọi validator của request, có lỗi thì ném, không thì `next()`; viết 1 lần dùng cho mọi command)
-- ⚠️ (19/10: nêu "nhanh hơn") Vì sao mật khẩu tối đa 72 ký tự? (BCrypt chỉ dùng 72 byte đầu, phần sau bị bỏ qua âm thầm)
+- ⚠️ (19/10: nêu "nhanh hơn"; 20/10: nói "quay về từ đầu") Vì sao mật khẩu tối đa 72 ký tự? (BCrypt chỉ dùng 72 **byte** đầu, phần sau bị bỏ qua âm thầm → 2 mật khẩu chung 72 byte đầu ra cùng hash; chữ có dấu chiếm 2–3 byte)
 - Vì sao DB đã giới hạn độ dài mà vẫn cần validator? (DB lỗi → 500 khó hiểu, báo từng lỗi một; validator → 400 rõ ràng, báo mọi lỗi cùng lúc, chặn trước khi tốn công hash)
 - Login sai nên báo chung hay riêng "email không tồn tại" / "sai mật khẩu"? (chung — chống **user enumeration**; nâng cao: thời gian phản hồi cũng có thể lộ — timing attack; endpoint register báo "email đã tồn tại" là đánh đổi chấp nhận được)
 - Vì sao validator của Login không kiểm tra độ dài/định dạng mật khẩu? (luật đăng ký có thể đổi; người dùng cũ với mật khẩu theo luật cũ sẽ bị khóa ngoài; Login chỉ cần so với hash)
@@ -145,8 +152,18 @@
 - Đổi Role trong DB thì token cũ có quyền mới ngay không? (không — role nằm trong token, server không hỏi DB; phải đợi refresh lấy token mới; đánh đổi của JWT, lý do access token hạn ngắn)
 - `UseAuthentication` trước hay sau `UseAuthorization`? (trước — biết là ai rồi mới xét quyền)
 - Vì sao 401/403 trả đúng mã mà `ConflictException` lại ra 500? (401/403 do middleware xác thực/phân quyền tự tạo response trước khi tới controller; exception ném trong handler thì chưa ai đổi thành mã HTTP → 500, cần middleware xử lý lỗi)
-- ⚠️ (19/10: định ghi vào file seed → cuối buổi đúng hướng, lần 1) Mật khẩu admin seed để ở đâu? (không trong code/appsettings vì repo public; user-secrets ở máy dev, biến môi trường trên server; email không bí mật thì để appsettings)
+- ✅ (19/10: định ghi vào file seed → cuối buổi đúng hướng → 20/10 đúng, nhớ thêm vế server) Mật khẩu admin seed để ở đâu? (không trong code/appsettings vì repo public; user-secrets ở máy dev, biến môi trường trên server; email không bí mật thì để appsettings)
 - Seed idempotent là gì? Vì sao seed chạy lúc khởi động mà không trong handler? (chạy nhiều lần kết quả như 1 lần — kiểm tra tồn tại trước; không ai gọi API để kích hoạt seed; fail fast)
 - Vì sao seed phải `CreateScope()`? (DbContext là Scoped, lúc khởi động chưa có request nên chưa có scope)
-- ⚠️ (19/10: chọn 401) Logout với token không tồn tại nên trả gì? (204 — idempotent: mục tiêu "token không dùng được" đã đạt; báo lỗi làm FE kẹt, bấm đúp bị lỗi vô lý)
+- ⚠️ (19/10: chọn 401 → hiểu lại, đúng lần 1) Logout với token không tồn tại nên trả gì? (204 — cùng tình huống "token không có trong DB" nhưng `/refresh` trả 401 vì không cấp được token, `/logout` trả 204 vì mục tiêu đã đạt; idempotent: mục tiêu "token không dùng được" đã đạt; báo lỗi làm FE kẹt, bấm đúp bị lỗi vô lý)
 - `ExecuteDeleteAsync` khác `Remove` + `SaveChanges` thế nào? (chạy thẳng 1 câu DELETE, không đọc lên, không qua change tracker; xóa 0 dòng không lỗi)
+- Hệ thống đang phân quyền theo kiểu gì? (RBAC — role nằm trong JWT claim, policy `AdminOnly` dùng `RequireRole`; viết qua policy để đổi luật chỉ sửa 1 chỗ; RBAC không chặn được "khách A hủy đơn của khách B" → cần kiểm tra **chủ sở hữu** trong handler bằng `userId` từ token; biết thêm: permission-based, ABAC)
+- (20/10: đoán "vì cần Id của cha" → sai) Navigation nên đặt chiều nào? Vì sao `RefreshToken.User` (con → cha) mà `Theater.Seats` (cha → con)? (chiều nào EF cũng tự điền FK, nên **không phải** vì Id; chọn theo **truy vấn thường bắt đầu từ đâu**: Refresh bắt đầu từ token rồi `Include(t => t.User)`; tạo suất chiếu/sơ đồ ghế bắt đầu từ phòng; chỉ thêm chiều thật sự dùng, tránh entity trung tâm như `User` phình to)
+- `IReadOnlyCollection<Seat> Seats => _seats.AsReadOnly()` có phải 2 danh sách không? (không — chỉ 1 list `_seats`; `=>` là viết tắt của `get`, mỗi lần đọc trả về chính `_seats` dạng chỉ đọc; thêm ghế phải qua method của entity → encapsulation)
+- ⚠️ (20/10: gọi là "race condition", định `return` âm thầm) Gọi `GenerateSeats` lần 2 nên làm gì? (đây là **guard**, không phải race condition — race là 2 request đồng thời; nên **ném exception** vì kết quả mong muốn (sơ đồ mới) không đạt — khác Logout lần 2 trả 204 vì kết quả đã đạt; `return` âm thầm = bug im lặng)
+- (20/10: đúng ý "có", chưa nêu được lý do) Validator đã chặn rồi, entity có cần kiểm tra lại không? (có — validator chỉ gác cửa **một** command; method public của entity ai cũng gọi được (command khác, seed, test); validator → 400 thân thiện, guard trong Domain → giữ **invariant** luôn đúng; ví dụ rows=27 → ghế tên `[1`)
+- ⚠️ (20/10: lý do sai) Trong handler, vì sao kiểm tra trùng tên **trước** khi sinh ghế? Đảo lại có sai không? (không sai kết quả — guard `GenerateSeats` chỉ nhìn object mới, không biết DB; chỉ phí công sinh ghế rồi bỏ → **fail fast**: kiểm tra rẻ trước)
+- Tên phòng "Phòng 1" và "phòng 1" xử lý thế nào? Sao không `ToLower` khi lưu như email? (tên để hiển thị → lưu nguyên, so sánh `ToLower()` (EF dịch `LOWER`); unique index vẫn phân biệt hoa/thường — đánh đổi; cách chặt hơn: `citext` / index trên `lower(Name)`)
+- Header `Location` sau 201 là gì? Vì sao có `/id`? (REST: `/api/theaters` là collection, `/api/theaters/3` là một tài nguyên; POST lên collection vì chưa có Id, server trả địa chỉ của tài nguyên mới; 201 = "đã tạo mới, nằm ở đây")
+- Vì sao Id phòng đầu tiên tạo qua API lại là 3? (sequence Postgres không quay lại số đã cấp, kể cả INSERT lỗi/rollback → Id nhảy cóc; đừng dùng Id để đếm, dùng `COUNT(*)`)
+- `[Authorize]` trên class + `[Authorize(Policy)]` trên method thì sao? (phải đạt **cả hai** — AND; secure by default: action mới quên gắn vẫn cần đăng nhập)
