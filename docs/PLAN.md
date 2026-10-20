@@ -103,8 +103,8 @@ GHẾ  (ShowtimeSeat): Available → Held → Booked
 
 ### T3 20/10 — Theater + Movie
 - [x] `CreateTheaterCommand` kèm sơ đồ ghế (rows, seatsPerRow, tự sinh `Seat`) ✅ 20/10
-- [ ] `Create/Update/DeleteMovieCommand`, `GetMoviesQuery` (phân trang cơ bản)
-- [ ] Validator cho từng command
+- [x] `Create/Update/DeleteMovieCommand`, `GetMoviesQuery` (phân trang cơ bản) ✅ 20/10
+- [x] Validator cho từng command ✅ 20/10
 - **Xong khi:** CRUD Movie hoạt động và chỉ Admin ghi được.
 
 ### T4 21/10 — Showtime

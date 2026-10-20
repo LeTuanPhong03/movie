@@ -42,6 +42,9 @@ namespace MovieReservation.Infrastructure.Persistence.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("PosterUrl")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
@@ -294,11 +297,13 @@ namespace MovieReservation.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("MovieReservation.Domain.Entities.RefreshToken", b =>
                 {
-                    b.HasOne("MovieReservation.Domain.Entities.User", null)
+                    b.HasOne("MovieReservation.Domain.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("MovieReservation.Domain.Entities.Reservation", b =>
@@ -319,7 +324,7 @@ namespace MovieReservation.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("MovieReservation.Domain.Entities.Seat", b =>
                 {
                     b.HasOne("MovieReservation.Domain.Entities.Theater", null)
-                        .WithMany()
+                        .WithMany("Seats")
                         .HasForeignKey("TheaterId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -358,6 +363,11 @@ namespace MovieReservation.Infrastructure.Persistence.Migrations
                         .HasForeignKey("ShowtimeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("MovieReservation.Domain.Entities.Theater", b =>
+                {
+                    b.Navigation("Seats");
                 });
 #pragma warning restore 612, 618
         }

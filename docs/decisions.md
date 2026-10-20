@@ -30,3 +30,13 @@
 **Lý do:** yêu cầu gốc (roadmap.sh) không đòi; thêm loại ghế kéo theo sửa `Seat`, input tạo phòng, cách tính giá và ERD (~nửa ngày) trong khi deadline 15/11 và trọng tâm là chống double-booking.
 
 **Thiết kế hiện tại vẫn mở rộng được:** thêm cột `SeatType` vào `Seat` bằng một migration (`defaultValue` = Standard cho ghế cũ); `TotalPrice` đã là snapshot nên đơn cũ không bị ảnh hưởng khi đổi cách tính giá.
+
+# 5. Movie: xóa mềm, chặn sửa thời lượng, phân trang báo lỗi (20/10)
+
+**Xóa phim → soft delete (`IsActive = false`)** thay vì xóa thật: `Showtime → Movie` là `Restrict`, phim đã có suất/vé cần giữ lịch sử; bật lại dễ, không phải tạo lại. Hệ quả: truy vấn cho khách phải lọc `IsActive`; phim ẩn không tạo suất mới được.
+
+**Hard delete có điều kiện (`DELETE /api/movies/{id}?hardDelete=true`)** — người học đề xuất: dọn phim tạo nhầm. Chỉ cho phép khi phim **chưa từng có suất chiếu** (kể cả suất đã chiếu xong), nếu có → 409 "chỉ có thể ẩn". Mặc định (không gửi query) là soft — bên an toàn là bên xảy ra khi client không nói gì. Kiểm tra idempotent ("đã ẩn rồi → bỏ qua") chỉ nằm trong nhánh soft, để hard delete phim đã ẩn vẫn chạy.
+
+**Sửa `DurationMinutes` → chặn (409) nếu phim còn suất chưa kết thúc (`EndAt > now`).** `Showtime.EndAt` là cột đã lưu, không tự cập nhật; để nguyên thì thực tế chồng phòng mà hệ thống không biết, tính lại thì có thể vi phạm luật không chồng giờ. Dùng `EndAt` (không phải `StartAt`) để tính cả suất đang chiếu dở; suất đã chiếu xong không ảnh hưởng nên không chặn.
+
+**Phân trang: `pageSize` sai → 400**, không âm thầm cắt về max (client không biết mình nhận ít hơn yêu cầu). Không gửi tham số thì dùng mặc định `page = 1`, `pageSize = 10`; `MaxPageSize = 50`.
