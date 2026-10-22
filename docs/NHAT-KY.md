@@ -5,12 +5,14 @@
 
 ## 📍 Hôm nay học gì
 
-**Cập nhật lần cuối:** 22/10/2026 (Bài 10 bước 1 xong, sang bước 2)
+**Cập nhật lần cuối:** 22/10/2026 (Bài 10 xong ✅, sang Bài 11)
 
 **Bước tiếp theo:**
-1. **Bài 10 — Showtime, bước 4: integration test** (bước 3 xong 22/10: controller + thử tay 5 ca OK; mentor dọn theo yêu cầu: tách 2 `Must`, sửa comment trùng, summary `ShowtimeDto`). Còn: người học commit `feat: thêm tạo suất chiếu kèm sinh ghế và chặn trùng giờ`; trả lời 3 câu thiết kế test. Test: gọi handler trực tiếp với `AppDbContext` của Testcontainers, seed Movie + Theater (`GenerateSeats`); 2 test: số `ShowtimeSeats` = số ghế; suất chồng → `ConflictException` (`Assert.ThrowsAsync`). Ghi chú gốc: EndAt = StartAt + thời lượng + 15 phút; từ chối trùng giờ cùng phòng; sinh `ShowtimeSeat` cho mọi ghế trong cùng transaction (`Include(t => t.Seats)`!); phim `IsActive = false` không tạo suất được; quay lại test luật chặn sửa thời lượng / chặn hard delete bằng suất thật; integration test 2 luật chính
-2. **Nợ:** `GET /api/theaters/{id}` → đổi `Created` sang `CreatedAtAction`
-3. Tham khảo code Project 1 tại `D:\hoc\HocCS\E-Commerce-API\Ecommerce`
+1. **Thí nghiệm "làm test đỏ"** (5 phút): tạm xóa `.Include(x => x.Seats)` → test 1 phải đỏ; tạm comment `throw ConflictException` → test 2 phải đỏ; trả lại code. Sau đó commit: `feat: thêm tạo suất chiếu kèm sinh ghế và chặn trùng giờ` (gồm cả `test`).
+2. **Bài 11 — Truy vấn cho khách (PLAN T5 22/10):** `GetShowtimesByDateQuery` (kèm phim, chỉ suất chưa chiếu), `GetSeatsByShowtimeQuery` (sơ đồ ghế + trạng thái), `AsNoTracking` + projection; thêm `GetById` → đổi `ShowtimesController.Create` sang `CreatedAtAction`.
+3. **Nợ Bài 9b:** dùng suất thật để thử luật chặn sửa thời lượng phim và chặn hard delete phim có suất.
+4. **Nợ:** `GET /api/theaters/{id}` → đổi `Created` sang `CreatedAtAction`
+5. Tham khảo code Project 1 tại `D:\hoc\HocCS\E-Commerce-API\Ecommerce`
 
 ## 🔁 Cách ôn câu phỏng vấn
 
@@ -101,6 +103,8 @@
 | 22/10 | Bài 10: kiểm công thức trùng | Tự tính đúng ca suất mới nằm **gọn trong** suất cũ (19–20 trong 18–22): cả 2 vế `true` → trùng ✅ — 1 công thức bắt đủ 3 ca cũ | |
 | 22/10 | Bài 10 bước 3: thử tay ✅ | 5 ca OK: 201 + `EndAt` đúng, 150 `ShowtimeSeats`, suất chạm nhau được tạo, suất chồng bị chặn, thiếu `Z` bị validator chặn (đã thêm `Kind == Utc`, bỏ field thừa) | Gộp 2 luật (UTC + tương lai) vào 1 `Must` → client không biết sai cái nào; comment công thức trùng viết thành "bắt đầu trước **suất mới** và kết thúc sau **suất mới**" = tả ca "nằm trong", sai nghĩa |
 | 22/10 | Bài 10: đọc công thức trùng | Diễn đạt lại thành "cũ kết thúc sau mới bắt đầu **và** mới bắt đầu trước cũ kết thúc" = 2 lần **cùng một vế** → mất vế `endAt > x.StartAt`; ví dụ 10–12 vs 18–21 cho thấy thiếu vế là báo trùng sai. Rút ra: comment nên đọc **theo thứ tự code viết** (mentor viết comment theo chiều ngược gây rối) | Đổi chủ ngữ (cũ ↔ mới) khi diễn đạt dễ lặp vế ⚠️ |
+| 22/10 | Bài 10 bước 4: thiết kế integration test | Chọn gọi handler trực tiếp (gợi ý: ít tầng hơn, test đúng luật nghiệp vụ; HTTP để sau khi có middleware 28/10). Seed: `Theater.GenerateSeats` ✅ + `new Movie` thường. Học: mỗi giai đoạn Arrange / Act / Assert dùng **DbContext mới** (tránh đọc từ change tracker); `Assert.ThrowsAsync<ConflictException>` | Trả lời "404 / 409" cho câu test exception ⚠️ — ở tầng handler **chưa có mã HTTP**, chỉ có exception; mã HTTP do middleware/controller đổi ra |
+| 22/10 | Bài 10 xong ✅ | Mentor viết `CreateShowtimeTests` theo yêu cầu: `SeedAsync` (phim 120 phút, phòng 2×3), migrate trong `InitializeAsync`, 3 DbContext tách Arrange/Act/Assert, `Assert.ThrowsAsync<ConflictException>`. `dotnet test`: 3/3 pass (~21s). PLAN T4 tick đủ | Chưa tự viết test; cần làm thí nghiệm "làm đỏ" để tin test bắt được bug |
 
 ## 🎤 Câu phỏng vấn đã luyện
 

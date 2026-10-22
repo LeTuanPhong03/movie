@@ -111,7 +111,7 @@ GHẾ  (ShowtimeSeat): Available → Held → Booked
 - [x] `CreateShowtimeCommand`: EndAt = StartAt + thời lượng phim + 15 phút dọn phòng
 - [x] **Từ chối nếu trùng giờ** với suất khác cùng phòng
 - [x] Trong cùng transaction, sinh `ShowtimeSeat` cho mọi ghế của phòng
-- [ ] Integration test: số ShowtimeSeat bằng số ghế của phòng; suất trùng giờ thì bị từ chối
+- [x] Integration test: số ShowtimeSeat bằng số ghế của phòng; suất trùng giờ thì bị từ chối
 - **Xong khi:** 2 test trên pass.
 
 ### T5 22/10 — Truy vấn cho khách
