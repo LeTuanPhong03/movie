@@ -108,9 +108,9 @@ GHẾ  (ShowtimeSeat): Available → Held → Booked
 - **Xong khi:** CRUD Movie hoạt động và chỉ Admin ghi được.
 
 ### T4 21/10 — Showtime
-- [ ] `CreateShowtimeCommand`: EndAt = StartAt + thời lượng phim + 15 phút dọn phòng
-- [ ] **Từ chối nếu trùng giờ** với suất khác cùng phòng
-- [ ] Trong cùng transaction, sinh `ShowtimeSeat` cho mọi ghế của phòng
+- [x] `CreateShowtimeCommand`: EndAt = StartAt + thời lượng phim + 15 phút dọn phòng
+- [x] **Từ chối nếu trùng giờ** với suất khác cùng phòng
+- [x] Trong cùng transaction, sinh `ShowtimeSeat` cho mọi ghế của phòng
 - [ ] Integration test: số ShowtimeSeat bằng số ghế của phòng; suất trùng giờ thì bị từ chối
 - **Xong khi:** 2 test trên pass.
 
