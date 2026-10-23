@@ -121,7 +121,7 @@ GHẾ  (ShowtimeSeat): Available → Held → Booked
 - **Xong khi:** gọi Swagger thấy sơ đồ ghế đúng.
 
 ### T6 23/10 — Deploy sớm
-- [ ] Dockerfile cho API (multi-stage)
+- [x] Dockerfile cho API (multi-stage)
 - [ ] Deploy lên Render/Railway cùng Postgres managed, migration tự chạy khi start
 - [ ] Biến môi trường: connection string, JWT secret
 - **Xong khi:** có link Swagger public mở được.

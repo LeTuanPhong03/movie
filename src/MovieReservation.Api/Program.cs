@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MovieReservation.Application;
 using MovieReservation.Infrastructure;
@@ -51,14 +52,19 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
-// Seed admin: chạy 1 lần lúc khởi động. Tạo scope riêng vì lúc này chưa có request nào
-// (AdminSeeder dùng DbContext, là Scoped).
+// Migrate + seed admin: chạy 1 lần lúc khởi động. Tạo scope riêng vì lúc này chưa có request nào
+// (AppDbContext và AdminSeeder đều là Scoped).
 using (var scope = app.Services.CreateScope())
 {
+    // Migrate TRƯỚC seed: DB mới trên server chưa có bảng nào, seeder cần bảng Users.
+    // Chỉ áp các migration chưa có trong __EFMigrationsHistory → chạy lại nhiều lần vẫn an toàn.
+    await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.MigrateAsync();
     await scope.ServiceProvider.GetRequiredService<AdminSeeder>().SeedAsync();
 }
 
-if (app.Environment.IsDevelopment())
+// Swagger luôn bật ở Development; môi trường khác bật bằng cờ Swagger:Enabled (biến môi trường Swagger__Enabled=true).
+// Không bật Swagger thì API vẫn public như cũ — bảo mật dựa vào [Authorize], không dựa vào giấu tài liệu.
+if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Swagger:Enabled"))
 {
     app.UseSwagger();
     app.UseSwaggerUI();

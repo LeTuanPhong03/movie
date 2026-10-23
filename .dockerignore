@@ -1,0 +1,11 @@
+# Không gửi những thứ này vào Docker khi build: build nhanh hơn, không lọt file thừa/bí mật vào image
+**/bin/
+**/obj/
+.git/
+.vs/
+.vscode/
+.idea/
+tests/
+docs/
+**/appsettings.Development.json
+*.md
