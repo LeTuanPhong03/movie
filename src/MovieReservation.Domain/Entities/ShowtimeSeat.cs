@@ -9,4 +9,5 @@ public class ShowtimeSeat
     public int? ReservationId { get; set; }
     public DateTime? HeldUntil { get; set; }
     public int RowVersion { get; set; }
+    public Seat Seat { get; set; } = null!;
 }

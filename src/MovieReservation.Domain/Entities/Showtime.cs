@@ -15,6 +15,8 @@ public class Showtime
     public DateTime StartAt { get; set; }
     public DateTime EndAt { get; set; }
     public decimal Price { get; set; }
+    public Theater Theater { get; set; } = null!;
+    public Movie Movie { get; set; } = null!; 
 
     private readonly List<ShowtimeSeat> _showtimeSeats = new();
     public IReadOnlyCollection<ShowtimeSeat> ShowtimeSeats => _showtimeSeats.AsReadOnly();

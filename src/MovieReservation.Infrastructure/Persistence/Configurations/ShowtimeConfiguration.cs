@@ -10,11 +10,11 @@ public class ShowtimeConfiguration : IEntityTypeConfiguration<Showtime>
     {
         builder.Property(s => s.Price)
             .HasPrecision(10, 2);
-        builder.HasOne<Movie>()
+        builder.HasOne<Movie>(s => s.Movie)
             .WithMany()
             .HasForeignKey(s => s.MovieId)
             .OnDelete(DeleteBehavior.Restrict);
-        builder.HasOne<Theater>()
+        builder.HasOne<Theater>(s => s.Theater)
             .WithMany()
             .HasForeignKey(s => s.TheaterId)
             .OnDelete(DeleteBehavior.Restrict);

@@ -115,9 +115,9 @@ GHẾ  (ShowtimeSeat): Available → Held → Booked
 - **Xong khi:** 2 test trên pass.
 
 ### T5 22/10 — Truy vấn cho khách
-- [ ] `GetShowtimesByDateQuery` (kèm thông tin phim, chỉ lấy suất chưa chiếu)
-- [ ] `GetSeatsByShowtimeQuery` trả về sơ đồ ghế có trạng thái Available/Held/Booked
-- [ ] Dùng `AsNoTracking` + projection, không trả entity ra ngoài
+- [x] `GetShowtimesByDateQuery` (kèm thông tin phim, chỉ lấy suất chưa chiếu)
+- [x] `GetSeatsByShowtimeQuery` trả về sơ đồ ghế có trạng thái Available/Held/Booked
+- [x] Dùng `AsNoTracking` + projection, không trả entity ra ngoài
 - **Xong khi:** gọi Swagger thấy sơ đồ ghế đúng.
 
 ### T6 23/10 — Deploy sớm

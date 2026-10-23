@@ -11,7 +11,7 @@ public class ShowtimeSeatConfiguration : IEntityTypeConfiguration<ShowtimeSeat>
         builder.Property(x => x.Status)
             .HasConversion<string>()
             .HasMaxLength(20);
-        builder.HasOne<Seat>()
+        builder.HasOne<Seat>(s => s.Seat)
             .WithMany()
             .HasForeignKey(s => s.SeatId)
             .OnDelete(DeleteBehavior.Restrict);
