@@ -20,7 +20,7 @@ public class ShowtimeSeatConfiguration : IEntityTypeConfiguration<ShowtimeSeat>
             .HasForeignKey(st => st.ShowtimeId)
             .OnDelete(DeleteBehavior.Cascade);
         builder.HasIndex(s => new { s.ShowtimeId, s.SeatId }).IsUnique();
-        builder.HasOne<Reservation>()
+        builder.HasOne<Reservation>(s => s.Reservation)
             .WithMany()
             .HasForeignKey(s => s.ReservationId)
             .OnDelete(DeleteBehavior.SetNull);
