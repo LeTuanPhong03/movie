@@ -480,3 +480,7 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Tài liệu học cá nhân (lộ trình, nhật ký) — chỉ giữ trên máy
+docs/NHAT-KY.md
+docs/PLAN.md
