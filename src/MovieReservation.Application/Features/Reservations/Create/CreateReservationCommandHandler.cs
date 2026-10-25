@@ -42,7 +42,7 @@ public class CreateReservationCommandHandler(IAppDbContext db, TimeProvider time
         var gheDaDat = showtimeSeats.Where(ss => !ss.IsAvailableAt(now)).ToList();
         if(gheDaDat.Any())
         {
-            throw new ConflictException($"Ghế {string.Join(", ", gheDaDat.Select(ss => ss.Id))} đã được đặt hoặc đang giữ.");
+            throw new ConflictException($"Ghế {string.Join(", ", gheDaDat.Select(ss => $"{ss.Seat.Row}{ss.Seat.Number}"))} đã được đặt hoặc đang giữ.");
         }
         // 4. Tạo Reservation Pending + chuyển ghế sang Held
         var reservation = new Reservation
