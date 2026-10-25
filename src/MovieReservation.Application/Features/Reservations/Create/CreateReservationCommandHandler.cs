@@ -18,73 +18,67 @@ public class CreateReservationCommandHandler(IAppDbContext db, TimeProvider time
 {
     public async Task<ReservationDto> Handle(CreateReservationCommand request, CancellationToken cancellationToken)
     {
-        var now = timeProvider.GetUtcNow().UtcDateTime;
-
-        // Cần dùng dữ liệu suất (giá, giờ, tên phim/phòng) → FirstOrDefaultAsync chứ không phải AnyAsync
+        DateTime now = timeProvider.GetUtcNow().UtcDateTime;
+        // 1. Kiểm tra suất còn đặt được
         var showtime = await db.Showtimes
             .Include(s => s.Movie)
             .Include(s => s.Theater)
             .FirstOrDefaultAsync(s => s.Id == request.ShowtimeId, cancellationToken);
-        if (showtime == null)
-        {
-            throw new NotFoundException($"Không tìm thấy suất chiếu có Id {request.ShowtimeId}.");
-        }
-        if (showtime.StartAt <= now)
-        {
+        if (showtime is null)
+            throw new NotFoundException($"Không tìm thấy suất chiếu {request.ShowtimeId}");
+        if(showtime.StartAt <= now)
             throw new ConflictException("Suất chiếu đã bắt đầu, không thể đặt vé.");
-        }
-
-        // Lọc theo cả ShowtimeId → Id ghế của suất khác sẽ không tìm thấy
-        var seats = await db.ShowtimeSeats
+        // 2. Kiểm tra ghế thuộc suất
+        var showtimeSeats = await db.ShowtimeSeats
             .Include(ss => ss.Seat)
             .Where(ss => ss.ShowtimeId == request.ShowtimeId && request.SeatIds.Contains(ss.Id))
             .ToListAsync(cancellationToken);
-        if (seats.Count != request.SeatIds.Count)
+        if (showtimeSeats.Count != request.SeatIds.Count)
         {
-            var missing = request.SeatIds.Except(seats.Select(ss => ss.Id));
-            throw new NotFoundException($"Ghế không thuộc suất chiếu này: {string.Join(", ", missing)}.");
+            var missingSeatIds = request.SeatIds.Except(showtimeSeats.Select(ss => ss.Id)).ToList();
+            throw new NotFoundException($"Ghế {string.Join(", ", missingSeatIds)} không thuộc suất chiếu {request.ShowtimeId}.");
         }
-
-        // Một ghế không trống là từ chối cả đơn
-        var taken = seats.Where(ss => !ss.IsAvailableAt(now)).ToList();
-        if (taken.Count > 0)
+        // 3. Kiểm tra xem ghế đã bị đặt hoặc đang giữ không
+        var gheDaDat = showtimeSeats.Where(ss => !ss.IsAvailableAt(now)).ToList();
+        if(gheDaDat.Any())
         {
-            var names = string.Join(", ", taken.Select(ss => $"{ss.Seat.Row}{ss.Seat.Number}"));
-            throw new ConflictException($"Ghế đã có người giữ hoặc đã bán: {names}.");
+            throw new ConflictException($"Ghế {string.Join(", ", gheDaDat.Select(ss => ss.Id))} đã được đặt hoặc đang giữ.");
         }
-
+        // 4. Tạo Reservation Pending + chuyển ghế sang Held
         var reservation = new Reservation
         {
             UserId = request.UserId,
-            ShowtimeId = showtime.Id,
+            ShowtimeId = request.ShowtimeId,
             Status = ReservationStatus.Pending,
-            TotalPrice = showtime.Price * seats.Count,
             CreatedAt = now,
-            ExpiresAt = now.AddMinutes(Reservation.HoldMinutes)
+            ExpiresAt = now.AddMinutes(Reservation.HoldMinutes),
+            TotalPrice = showtime.Price * showtimeSeats.Count,
         };
         db.Reservations.Add(reservation);
-
-        foreach (var seat in seats)
+        foreach (var showtimeSeat in showtimeSeats)
         {
-            seat.Status = SeatStatus.Held;
-            seat.HeldUntil = reservation.ExpiresAt;
-            // Gán navigation thay vì ReservationId: lúc này đơn chưa có Id, EF sẽ điền khi lưu
-            seat.Reservation = reservation;
+            showtimeSeat.Status = SeatStatus.Held;
+            // Gắn Reservation vào ShowtimeSeat để biết ghế đang giữ cho đơn nào, và khi nào hết hạn giữ
+            showtimeSeat.Reservation = reservation;
+            showtimeSeat.HeldUntil = reservation.ExpiresAt;
         }
-
         await db.SaveChangesAsync(cancellationToken);
-
-        return new ReservationDto(
-            reservation.Id,
-            reservation.Status,
-            reservation.TotalPrice,
-            reservation.ExpiresAt,
-            showtime.Id,
-            showtime.Movie.Title,
-            showtime.Theater.Name,
-            showtime.StartAt,
-            seats.OrderBy(ss => ss.Seat.Row).ThenBy(ss => ss.Seat.Number)
-                .Select(ss => new ReservedSeatDto(ss.Seat.Row, ss.Seat.Number))
-                .ToList());
+        return new ReservationDto
+        (
+            Id: reservation.Id,
+            ShowtimeId: reservation.ShowtimeId,
+            Status: reservation.Status,
+            ExpiresAt: reservation.ExpiresAt,
+            TotalPrice: reservation.TotalPrice,
+            MovieTitle: showtime.Movie.Title,
+            TheaterName: showtime.Theater.Name,
+            StartAt: showtime.StartAt,
+            MovieEndAt: showtime.StartAt.AddMinutes(showtime.Movie.DurationMinutes),
+            Seats: showtimeSeats.OrderBy(ss => ss.Seat.Row).ThenBy(ss => ss.Seat.Number).Select(ss => new ReservedSeatDto
+            (
+               ss.Seat.Row,
+                ss.Seat.Number
+            )).ToList()
+        );
     }
 }
