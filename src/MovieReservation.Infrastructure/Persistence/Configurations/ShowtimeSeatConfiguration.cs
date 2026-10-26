@@ -4,6 +4,11 @@ using MovieReservation.Domain.Entities;
 
 namespace MovieReservation.Infrastructure.Persistence.Configurations;
 
+/// <summary>
+/// Cấu hình bảng ShowtimeSeats: Status lưu dạng chuỗi, khóa ngoại tới Seat/Showtime/Reservation,
+/// mỗi ghế chỉ xuất hiện 1 lần trong 1 suất (unique ShowtimeId + SeatId),
+/// và RowVersion ánh xạ sang cột hệ thống xmin để chống ghi đè khi 2 người cùng sửa 1 ghế.
+/// </summary>
 public class ShowtimeSeatConfiguration : IEntityTypeConfiguration<ShowtimeSeat>
 {
     public void Configure(EntityTypeBuilder<ShowtimeSeat> builder)
@@ -24,5 +29,7 @@ public class ShowtimeSeatConfiguration : IEntityTypeConfiguration<ShowtimeSeat>
             .WithMany()
             .HasForeignKey(s => s.ReservationId)
             .OnDelete(DeleteBehavior.SetNull);
+        builder.Property(s => s.RowVersion)
+            .IsRowVersion();
     }
 }

@@ -9,10 +9,12 @@ using MovieReservation.Domain.Enums;
 namespace MovieReservation.Application.Features.Reservations.Create;
 
 /// <summary>
-/// Đặt vé (happy path): kiểm tra suất còn đặt được, ghế thuộc suất và còn trống (tính cả Held đã hết hạn),
+/// Đặt vé: kiểm tra suất còn đặt được, ghế thuộc suất và còn trống (tính cả Held đã hết hạn),
 /// rồi tạo Reservation Pending + chuyển ghế sang Held trong MỘT lần SaveChanges (tất cả hoặc không gì cả).
-/// CHƯA chống đặt trùng khi 2 người bấm cùng lúc — cố ý để tuần 2 tái hiện race condition.
+/// Chống đặt trùng bằng optimistic concurrency (RowVersion ánh xạ xmin): nếu ghế bị người khác giữ
+/// trong lúc đang đặt, người lưu sau nhận 409 và không ghế nào bị giữ nửa chừng.
 /// </summary>
+
 public class CreateReservationCommandHandler(IAppDbContext db, TimeProvider timeProvider)
     : IRequestHandler<CreateReservationCommand, ReservationDto>
 {
@@ -62,7 +64,16 @@ public class CreateReservationCommandHandler(IAppDbContext db, TimeProvider time
             showtimeSeat.Reservation = reservation;
             showtimeSeat.HeldUntil = reservation.ExpiresAt;
         }
-        await db.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // Có người giữ ghế trước (xmin đã đổi). SaveChanges đã tự rollback cả đơn
+            // không retry vì ghế chỉ có một: thua tức là ghế đã mất.
+            throw new ConflictException("Ghế đã được đặt hoặc đang giữ bởi người khác. Vui lòng chọn ghế khác.");
+        }
         return new ReservationDto
         (
             Id: reservation.Id,
@@ -76,7 +87,7 @@ public class CreateReservationCommandHandler(IAppDbContext db, TimeProvider time
             MovieEndAt: showtime.StartAt.AddMinutes(showtime.Movie.DurationMinutes),
             Seats: showtimeSeats.OrderBy(ss => ss.Seat.Row).ThenBy(ss => ss.Seat.Number).Select(ss => new ReservedSeatDto
             (
-               ss.Seat.Row,
+                ss.Seat.Row,
                 ss.Seat.Number
             )).ToList()
         );

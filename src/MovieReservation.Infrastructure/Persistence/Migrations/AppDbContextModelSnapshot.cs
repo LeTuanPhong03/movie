@@ -212,8 +212,11 @@ namespace MovieReservation.Infrastructure.Persistence.Migrations
                     b.Property<int?>("ReservationId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("RowVersion")
-                        .HasColumnType("integer");
+                    b.Property<uint>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
 
                     b.Property<int>("SeatId")
                         .HasColumnType("integer");
@@ -332,37 +335,50 @@ namespace MovieReservation.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("MovieReservation.Domain.Entities.Showtime", b =>
                 {
-                    b.HasOne("MovieReservation.Domain.Entities.Movie", null)
+                    b.HasOne("MovieReservation.Domain.Entities.Movie", "Movie")
                         .WithMany()
                         .HasForeignKey("MovieId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("MovieReservation.Domain.Entities.Theater", null)
+                    b.HasOne("MovieReservation.Domain.Entities.Theater", "Theater")
                         .WithMany()
                         .HasForeignKey("TheaterId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Movie");
+
+                    b.Navigation("Theater");
                 });
 
             modelBuilder.Entity("MovieReservation.Domain.Entities.ShowtimeSeat", b =>
                 {
-                    b.HasOne("MovieReservation.Domain.Entities.Reservation", null)
+                    b.HasOne("MovieReservation.Domain.Entities.Reservation", "Reservation")
                         .WithMany()
                         .HasForeignKey("ReservationId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("MovieReservation.Domain.Entities.Seat", null)
+                    b.HasOne("MovieReservation.Domain.Entities.Seat", "Seat")
                         .WithMany()
                         .HasForeignKey("SeatId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("MovieReservation.Domain.Entities.Showtime", null)
-                        .WithMany()
+                        .WithMany("ShowtimeSeats")
                         .HasForeignKey("ShowtimeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Reservation");
+
+                    b.Navigation("Seat");
+                });
+
+            modelBuilder.Entity("MovieReservation.Domain.Entities.Showtime", b =>
+                {
+                    b.Navigation("ShowtimeSeats");
                 });
 
             modelBuilder.Entity("MovieReservation.Domain.Entities.Theater", b =>

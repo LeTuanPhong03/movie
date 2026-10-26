@@ -13,7 +13,7 @@ public class ShowtimeSeat
     public SeatStatus Status { get; set; }
     public int? ReservationId { get; set; }
     public DateTime? HeldUntil { get; set; }
-    public int RowVersion { get; set; }
+    public uint RowVersion { get; set; }
     public Seat Seat { get; set; } = null!;
     public Reservation? Reservation { get; set; }
 
