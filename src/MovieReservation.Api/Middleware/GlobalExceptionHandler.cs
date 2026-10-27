@@ -7,7 +7,7 @@ using MovieReservation.Application.Common.Exceptions;
 namespace MovieReservation.Api.Middleware;
 
 /// <summary>
-/// Đổi exception thành response lỗi theo chuẩn ProblemDetails: lỗi nghiệp vụ → 400/401/404/409 kèm message,bug → 500 không lộ chi tiết (chỉ ghi log). Handler MediatR ở tầng Application chỉ ném exception vì nó không biết mình chạy qua HTTP (test, background job cũng gọi nó), nên tầng Api dịch sang mã HTTP tại đây.
+/// Đổi exception thành response lỗi theo chuẩn ProblemDetails: lỗi nghiệp vụ → 400/401/404/409 kèm message, bug → 500 không lộ chi tiết (chỉ ghi log). Handler MediatR ở tầng Application chỉ ném exception vì nó không biết mình chạy qua HTTP (test, background job cũng gọi nó), nên tầng Api dịch sang mã HTTP tại đây.
 /// </summary>
 public class GlobalExceptionHandler(
     ILogger<GlobalExceptionHandler> logger) : IExceptionHandler

@@ -50,7 +50,7 @@ builder.Services.AddSwaggerGen(options =>
         });
 });
 
-builder.Services.AddProblemDetails(); // RFC 7807: Problem Details for HTTP APIs. Tự động trả về JSON có cấu trúc chuẩn khi lỗi xảy ra.
+builder.Services.AddProblemDetails(); // dịch vụ ProblemDetails (RFC 9457), UseStatusCodePages dùng để điền body lỗi
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 var app = builder.Build();
