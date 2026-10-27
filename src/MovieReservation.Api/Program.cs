@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using MovieReservation.Api.Middleware;
 using MovieReservation.Application;
 using MovieReservation.Infrastructure;
 using MovieReservation.Infrastructure.Persistence;
@@ -11,7 +12,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
-// Enum ra JSON dạng chữ ("Available") thay vì số (0): tự giải thích, đổi thứ tự enum không làm FE hiểu sai
 builder.Services.AddControllers()
     .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
@@ -50,7 +50,14 @@ builder.Services.AddSwaggerGen(options =>
         });
 });
 
+builder.Services.AddProblemDetails(); // RFC 7807: Problem Details for HTTP APIs. Tự động trả về JSON có cấu trúc chuẩn khi lỗi xảy ra.
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
 var app = builder.Build();
+
+app.UseExceptionHandler(); // đứng đầu dây chuyền để bọc ngoài MapControllers: exception từ handler bay ngược ra sẽ đi qua đây
+app.UseStatusCodePages();  // lỗi ASP.NET tự trả (401/403/404, không có exception, body rỗng) → điền ProblemDetails
+
 
 // Migrate + seed admin: chạy 1 lần lúc khởi động. Tạo scope riêng vì lúc này chưa có request nào
 // (AppDbContext và AdminSeeder đều là Scoped).
