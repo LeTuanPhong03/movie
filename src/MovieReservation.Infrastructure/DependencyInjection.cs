@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MovieReservation.Application.Common.Interfaces;
+using MovieReservation.Infrastructure.BackgroundJobs;
 using MovieReservation.Infrastructure.Identity;
 using MovieReservation.Infrastructure.Persistence;
 
@@ -27,6 +28,8 @@ public static class DependencyInjection
         services.AddSingleton(TimeProvider.System);
         // Seed admin lúc khởi động (Program.cs gọi)
         services.AddScoped<AdminSeeder>();
+        // Job dọn đơn Pending quá hạn, chạy nền suốt đời app
+        services.AddHostedService<ReservationExpiryJob>();
         return services;
     }
 }
