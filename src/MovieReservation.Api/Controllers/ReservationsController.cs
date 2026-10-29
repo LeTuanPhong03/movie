@@ -2,6 +2,7 @@ using System.Security.Claims;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MovieReservation.Application.Features.Reservations.Confirm;
 using MovieReservation.Application.Features.Reservations.Create;
 using MovieReservation.Application.Features.Reservations.DTOs;
 
@@ -24,6 +25,14 @@ public class ReservationsController(ISender sender) : ControllerBase
         var result = await sender.Send(command, cancellationToken);
         // Chưa có GET /api/reservations/{id} nên chưa dùng CreatedAtAction được; có endpoint đó thì đổi
         return StatusCode(StatusCodes.Status201Created, result);
+    }
+
+    [HttpPost("{id:int}/confirm")]
+    public async Task<IActionResult> Confirm(int id, CancellationToken cancellationToken)
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        await sender.Send(new ConfirmReservationCommand(id, userId), cancellationToken);
+        return NoContent();
     }
 }
 
