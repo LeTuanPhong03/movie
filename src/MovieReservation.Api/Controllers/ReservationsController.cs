@@ -2,6 +2,7 @@ using System.Security.Claims;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MovieReservation.Application.Features.Reservations.Cancel;
 using MovieReservation.Application.Features.Reservations.Confirm;
 using MovieReservation.Application.Features.Reservations.Create;
 using MovieReservation.Application.Features.Reservations.DTOs;
@@ -32,6 +33,16 @@ public class ReservationsController(ISender sender) : ControllerBase
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         await sender.Send(new ConfirmReservationCommand(id, userId), cancellationToken);
+        return NoContent();
+    }
+
+    [HttpPost("{id:int}/cancel")]
+    public async Task<IActionResult> Cancel(int id, CancellationToken cancellationToken)
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        // Role đọc từ claim ở đây (Api biết token), handler chỉ nhận bool
+        var isAdmin = User.IsInRole("Admin");
+        await sender.Send(new CancelReservationCommand(id, userId, isAdmin), cancellationToken);
         return NoContent();
     }
 }
