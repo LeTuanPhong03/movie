@@ -216,6 +216,19 @@ public class ApiEndToEndTests : IAsyncLifetime
         var adminMoi = await ClientAsync("nangquyen@test.local", "Khach@12345");
         Assert.Equal(HttpStatusCode.OK, (await adminMoi.GetAsync("/api/users")).StatusCode);
 
+        // Owner (admin từ cấu hình): Admin mới không hạ được Owner (409), không hạ được Admin khác (403),
+        // nhưng nâng được khách; Owner hạ được Admin mới
+        Assert.Equal(HttpStatusCode.Conflict,
+            (await adminMoi.PutAsJsonAsync($"/api/users/{adminId}/role", new { role = "Customer" })).StatusCode);
+        await KhachMoiAsync("khach2@test.local");
+        var khach2Id = (await DocAsync<PagedResult<UserDto>>(await admin.GetAsync("/api/users?search=khach2"), HttpStatusCode.OK)).Items.Single().Id;
+        Assert.Equal(HttpStatusCode.NoContent,
+            (await adminMoi.PutAsJsonAsync($"/api/users/{khach2Id}/role", new { role = "Admin" })).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden,
+            (await adminMoi.PutAsJsonAsync($"/api/users/{khach2Id}/role", new { role = "Customer" })).StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent,
+            (await admin.PutAsJsonAsync($"/api/users/{userId}/role", new { role = "Customer" })).StatusCode);
+
         // POST phòng → Location trỏ tới GET /api/theaters/{id} có thật
         var tao = await admin.PostAsJsonAsync("/api/theaters", new { name = "Phòng Location", rows = 3, seatsPerRow = 5 });
         var phong = await DocAsync<TheaterDto>(tao, HttpStatusCode.Created);

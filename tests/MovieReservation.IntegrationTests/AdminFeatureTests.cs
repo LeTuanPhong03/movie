@@ -46,6 +46,64 @@ public class AdminFeatureTests : PostgresTestBase
         Assert.Equal(UserRole.Admin, (await check.Users.SingleAsync(u => u.Id == s.UserA)).Role);
     }
 
+    // A = Owner, B = Admin thường, khách C (thêm mới)
+    private async Task<(int Owner, int Admin, int Khach)> OwnerAdminKhachAsync()
+    {
+        var s = await SeedAsync();
+        await using var db = NewDb();
+        await db.Users.Where(u => u.Id == s.UserA)
+            .ExecuteUpdateAsync(x => x.SetProperty(u => u.Role, UserRole.Admin).SetProperty(u => u.IsOwner, true));
+        await db.Users.Where(u => u.Id == s.UserB).ExecuteUpdateAsync(x => x.SetProperty(u => u.Role, UserRole.Admin));
+        var khach = new Domain.Entities.User { FullName = "C", Email = "c@example.com", PasswordHash = "x" };
+        db.Users.Add(khach);
+        await db.SaveChangesAsync();
+        return (s.UserA, s.UserB, khach.Id);
+    }
+
+    private async Task DoiQuyenAsync(int userId, UserRole role, int nguoiGoi)
+    {
+        await using var db = NewDb();
+        await new ChangeUserRoleCommandHandler(db).Handle(new ChangeUserRoleCommand(userId, role, nguoiGoi), CancellationToken.None);
+    }
+
+    private async Task<UserRole> RoleAsync(int userId)
+    {
+        await using var db = NewDb();
+        return await db.Users.Where(u => u.Id == userId).Select(u => u.Role).SingleAsync();
+    }
+
+    [Fact]
+    public async Task Admin_thuong_ha_Owner_bi_tu_choi_Owner_van_la_Admin()
+    {
+        var (owner, admin, _) = await OwnerAdminKhachAsync();
+
+        await Assert.ThrowsAsync<ConflictException>(() => DoiQuyenAsync(owner, UserRole.Customer, nguoiGoi: admin));
+
+        Assert.Equal(UserRole.Admin, await RoleAsync(owner));
+    }
+
+    [Fact]
+    public async Task Admin_thuong_nang_duoc_khach_nhung_khong_ha_duoc_Admin_khac()
+    {
+        var (_, admin, khach) = await OwnerAdminKhachAsync();
+
+        await DoiQuyenAsync(khach, UserRole.Admin, nguoiGoi: admin);
+        Assert.Equal(UserRole.Admin, await RoleAsync(khach));
+
+        await Assert.ThrowsAsync<ForbiddenException>(() => DoiQuyenAsync(khach, UserRole.Customer, nguoiGoi: admin));
+        Assert.Equal(UserRole.Admin, await RoleAsync(khach));
+    }
+
+    [Fact]
+    public async Task Owner_ha_duoc_Admin_khac()
+    {
+        var (owner, admin, _) = await OwnerAdminKhachAsync();
+
+        await DoiQuyenAsync(admin, UserRole.Customer, nguoiGoi: owner);
+
+        Assert.Equal(UserRole.Customer, await RoleAsync(admin));
+    }
+
     [Fact]
     public async Task Doi_quyen_user_khong_ton_tai_tra_404()
     {
