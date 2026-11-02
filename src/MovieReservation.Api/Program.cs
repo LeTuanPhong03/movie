@@ -50,6 +50,11 @@ builder.Services.AddSwaggerGen(options =>
         });
 });
 
+// CORS: frontend Next.js chạy ở domain/cổng khác nên trình duyệt chặn gọi API nếu origin không có trong Cors:AllowedOrigins.
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
+    policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod()));
+
 builder.Services.AddProblemDetails(); // dịch vụ ProblemDetails (RFC 9457), UseStatusCodePages dùng để điền body lỗi
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
@@ -67,6 +72,7 @@ using (var scope = app.Services.CreateScope())
     // Chỉ áp các migration chưa có trong __EFMigrationsHistory → chạy lại nhiều lần vẫn an toàn.
     await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.MigrateAsync();
     await scope.ServiceProvider.GetRequiredService<AdminSeeder>().SeedAsync();
+    await scope.ServiceProvider.GetRequiredService<DemoSeeder>().SeedAsync();
 }
 
 // Swagger luôn bật ở Development; môi trường khác bật bằng cờ Swagger:Enabled (biến môi trường Swagger__Enabled=true).
@@ -79,6 +85,8 @@ if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Swagger
 
 app.UseHttpsRedirection();
 
+app.UseCors();
+
 app.UseAuthentication();
 
 app.UseAuthorization();
@@ -86,3 +94,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Cho integration test dùng WebApplicationFactory<Program> (top-level statements sinh class Program internal)
+public partial class Program;

@@ -17,7 +17,7 @@ public class ReservationConfiguration : IEntityTypeConfiguration<Reservation>
             .WithMany()
             .HasForeignKey(r => r.UserId)
             .OnDelete(DeleteBehavior.Restrict);
-        builder.HasOne<Showtime>()
+        builder.HasOne(r => r.Showtime)
             .WithMany()
             .HasForeignKey(r => r.ShowtimeId)
             .OnDelete(DeleteBehavior.Restrict);

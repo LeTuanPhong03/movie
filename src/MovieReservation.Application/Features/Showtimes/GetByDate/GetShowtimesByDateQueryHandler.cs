@@ -29,9 +29,10 @@ public class GetShowtimesByDateQueryHandler(IAppDbContext db, TimeProvider timeP
             .OrderBy(s => s.StartAt)
             .Select(s => new ShowtimeDto(
                 Id: s.Id,
+                MovieId: s.MovieId,
                 Title: s.Movie.Title,
                 StartAt: s.StartAt,
-                EndAt: s.EndAt,
+                MovieEndAt: s.StartAt.AddMinutes(s.Movie.DurationMinutes),
                 TheaterName: s.Theater.Name,
                 Price: s.Price))
             .ToListAsync(cancellationToken);

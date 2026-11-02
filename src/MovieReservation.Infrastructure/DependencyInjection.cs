@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MovieReservation.Application.Common.Interfaces;
 using MovieReservation.Infrastructure.BackgroundJobs;
 using MovieReservation.Infrastructure.Identity;
+using MovieReservation.Infrastructure.Payments;
 using MovieReservation.Infrastructure.Persistence;
 
 namespace MovieReservation.Infrastructure;
@@ -24,6 +25,10 @@ public static class DependencyInjection
         services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
         // ITokenService → JwtTokenService
         services.AddScoped<ITokenService, JwtTokenService>();
+        // Cổng thanh toán VNPay (ký/kiểm chữ ký HMAC-SHA512)
+        services.AddScoped<IVnPayGateway, VnPayGateway>();
+        // Dữ liệu demo (phim, phòng, suất 7 ngày tới) — chỉ chạy khi bật Seed:Demo
+        services.AddScoped<DemoSeeder>();
         // TimeProvider
         services.AddSingleton(TimeProvider.System);
         // Seed admin lúc khởi động (Program.cs gọi)

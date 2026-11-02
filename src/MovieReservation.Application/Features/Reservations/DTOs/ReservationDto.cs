@@ -5,7 +5,8 @@ namespace MovieReservation.Application.Features.Reservations.DTOs;
 /// <summary>
 /// Đơn đặt trả cho khách — CHƯA phải vé (vé mỗi ghế một cái, chỉ có sau khi thanh toán/Confirmed).
 /// Trường bắt buộc để làm bước tiếp: Id (confirm/cancel), Status, TotalPrice, ExpiresAt (hạn thanh toán).
-/// Phần còn lại để khách xem lại đơn trước khi trả tiền. ShowtimeId để link về suất khi tái dùng ở xem chi tiết/lịch sử.
+/// Phần còn lại để khách xem lại đơn trước khi trả tiền. ShowtimeId để link về suất khi tái dùng ở xem chi tiết/lịch sử;
+/// MovieId để client lấy đúng phim (tên phim không unique).
 /// MovieEndAt = StartAt + thời lượng phim, KHÔNG dùng Showtime.EndAt (đã cộng thời gian dọn phòng).
 /// </summary>
 public record ReservationDto(
@@ -14,6 +15,7 @@ public record ReservationDto(
     decimal TotalPrice,
     DateTime ExpiresAt,
     int ShowtimeId,
+    int MovieId,
     string MovieTitle,
     string TheaterName,
     DateTime StartAt,

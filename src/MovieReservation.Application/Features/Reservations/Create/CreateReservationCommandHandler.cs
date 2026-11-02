@@ -63,6 +63,8 @@ public class CreateReservationCommandHandler(IAppDbContext db, TimeProvider time
             // Gắn Reservation vào ShowtimeSeat để biết ghế đang giữ cho đơn nào, và khi nào hết hạn giữ
             showtimeSeat.Reservation = reservation;
             showtimeSeat.HeldUntil = reservation.ExpiresAt;
+            // Bản chụp ghế cho lịch sử: ShowtimeSeat.ReservationId sẽ bị xoá khi huỷ/hết hạn, bảng này thì không
+            reservation.AddSeat(showtimeSeat.SeatId);
         }
         try
         {
@@ -78,6 +80,7 @@ public class CreateReservationCommandHandler(IAppDbContext db, TimeProvider time
         (
             Id: reservation.Id,
             ShowtimeId: reservation.ShowtimeId,
+            MovieId: showtime.MovieId,
             Status: reservation.Status,
             ExpiresAt: reservation.ExpiresAt,
             TotalPrice: reservation.TotalPrice,

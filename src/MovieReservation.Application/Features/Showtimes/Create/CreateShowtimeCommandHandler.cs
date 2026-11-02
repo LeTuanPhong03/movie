@@ -54,9 +54,10 @@ public class CreateShowtimeCommandHandler(IAppDbContext db) : IRequestHandler<Cr
         var showtimeDto = new ShowtimeDto
         (
             Id: showtime.Id,
+            MovieId: showtime.MovieId,
             TheaterName: theater.Name,
             StartAt: showtime.StartAt,
-            EndAt: showtime.EndAt,
+            MovieEndAt: showtime.StartAt.AddMinutes(movie.DurationMinutes),
             Title: movie.Title,
             Price: showtime.Price
         );

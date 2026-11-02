@@ -22,6 +22,8 @@ public interface IAppDbContext
     DbSet<User> Users { get; }
     DbSet<ShowtimeSeat> ShowtimeSeats { get; }
     DbSet<RefreshToken> RefreshTokens { get; }
+    DbSet<ReservationSeat> ReservationSeats { get; }
+    DbSet<Payment> Payments { get; }
     // Mở transaction khi một nghiệp vụ cần nhiều câu lệnh tất-cả-hoặc-không (vd. Confirm: 2 câu ExecuteUpdate)
     DatabaseFacade Database { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);

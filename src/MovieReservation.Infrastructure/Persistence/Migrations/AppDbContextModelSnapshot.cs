@@ -62,6 +62,55 @@ namespace MovieReservation.Infrastructure.Persistence.Migrations
                     b.ToTable("Movies");
                 });
 
+            modelBuilder.Entity("MovieReservation.Domain.Entities.Payment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ProviderTransactionNo")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("ReservationId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ResponseCode")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("TxnRef")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReservationId");
+
+                    b.HasIndex("TxnRef")
+                        .IsUnique();
+
+                    b.ToTable("Payments");
+                });
+
             modelBuilder.Entity("MovieReservation.Domain.Entities.RefreshToken", b =>
                 {
                     b.Property<int>("Id")
@@ -136,6 +185,30 @@ namespace MovieReservation.Infrastructure.Persistence.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Reservations");
+                });
+
+            modelBuilder.Entity("MovieReservation.Domain.Entities.ReservationSeat", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ReservationId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SeatId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SeatId");
+
+                    b.HasIndex("ReservationId", "SeatId")
+                        .IsUnique();
+
+                    b.ToTable("ReservationSeats");
                 });
 
             modelBuilder.Entity("MovieReservation.Domain.Entities.Seat", b =>
@@ -298,6 +371,15 @@ namespace MovieReservation.Infrastructure.Persistence.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("MovieReservation.Domain.Entities.Payment", b =>
+                {
+                    b.HasOne("MovieReservation.Domain.Entities.Reservation", null)
+                        .WithMany()
+                        .HasForeignKey("ReservationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("MovieReservation.Domain.Entities.RefreshToken", b =>
                 {
                     b.HasOne("MovieReservation.Domain.Entities.User", "User")
@@ -311,7 +393,7 @@ namespace MovieReservation.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("MovieReservation.Domain.Entities.Reservation", b =>
                 {
-                    b.HasOne("MovieReservation.Domain.Entities.Showtime", null)
+                    b.HasOne("MovieReservation.Domain.Entities.Showtime", "Showtime")
                         .WithMany()
                         .HasForeignKey("ShowtimeId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -322,6 +404,25 @@ namespace MovieReservation.Infrastructure.Persistence.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Showtime");
+                });
+
+            modelBuilder.Entity("MovieReservation.Domain.Entities.ReservationSeat", b =>
+                {
+                    b.HasOne("MovieReservation.Domain.Entities.Reservation", null)
+                        .WithMany("Seats")
+                        .HasForeignKey("ReservationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MovieReservation.Domain.Entities.Seat", "Seat")
+                        .WithMany()
+                        .HasForeignKey("SeatId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Seat");
                 });
 
             modelBuilder.Entity("MovieReservation.Domain.Entities.Seat", b =>
@@ -374,6 +475,11 @@ namespace MovieReservation.Infrastructure.Persistence.Migrations
                     b.Navigation("Reservation");
 
                     b.Navigation("Seat");
+                });
+
+            modelBuilder.Entity("MovieReservation.Domain.Entities.Reservation", b =>
+                {
+                    b.Navigation("Seats");
                 });
 
             modelBuilder.Entity("MovieReservation.Domain.Entities.Showtime", b =>

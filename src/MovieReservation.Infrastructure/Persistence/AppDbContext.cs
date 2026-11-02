@@ -20,6 +20,8 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<ShowtimeSeat> ShowtimeSeats { get; set; }
     public DbSet<User> Users { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
+    public DbSet<ReservationSeat> ReservationSeats { get; set; }
+    public DbSet<Payment> Payments { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

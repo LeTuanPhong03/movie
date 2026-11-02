@@ -19,9 +19,10 @@ public class GetShowtimeByIdQueryHandler(IAppDbContext db) : IRequestHandler<Get
             .Where(s => s.Id == request.Id && s.Movie.IsActive)
             .Select(s => new ShowtimeDto(
                 Id: s.Id,
+                MovieId: s.MovieId,
                 Title: s.Movie.Title,
                 StartAt: s.StartAt,
-                EndAt: s.EndAt,
+                MovieEndAt: s.StartAt.AddMinutes(s.Movie.DurationMinutes),
                 TheaterName: s.Theater.Name,
                 Price: s.Price))
             .FirstOrDefaultAsync(cancellationToken)
