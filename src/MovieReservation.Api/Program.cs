@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MovieReservation.Api.Middleware;
@@ -58,8 +59,19 @@ builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
 builder.Services.AddProblemDetails(); // dịch vụ ProblemDetails (RFC 9457), UseStatusCodePages dùng để điền body lỗi
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
+// Render đứng sau proxy: IP thật của khách nằm ở header X-Forwarded-For, RemoteIpAddress chỉ là IP proxy.
+// Xoá danh sách proxy tin cậy vì không biết trước IP proxy của Render → client tự gửi header này thì giả được IP;
+// chấp nhận được vì IP chỉ dùng điền vnp_IpAddr (thông tin cho VNPay), không dùng để phân quyền hay chặn.
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 var app = builder.Build();
 
+app.UseForwardedHeaders(); // trước mọi middleware khác để cả HTTPS redirect cũng thấy đúng scheme/IP
 app.UseExceptionHandler(); // đứng đầu dây chuyền để bọc ngoài MapControllers: exception từ handler bay ngược ra sẽ đi qua đây
 app.UseStatusCodePages();  // lỗi ASP.NET tự trả (401/403/404, không có exception, body rỗng) → điền ProblemDetails
 

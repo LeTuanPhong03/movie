@@ -1,3 +1,4 @@
+using System.Net;
 using System.Security.Claims;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -52,7 +53,9 @@ public class ReservationsController(ISender sender, IConfiguration configuration
     [HttpPost("{id:int}/payments")]
     public async Task<ActionResult<PaymentLinkDto>> CreatePayment(int id, CancellationToken cancellationToken)
     {
-        var clientIp = HttpContext.Connection.RemoteIpAddress?.MapToIPv4().ToString() ?? "127.0.0.1";
+        // ::1 (localhost IPv6).MapToIPv4() ra "0.0.0.1" chứ không phải 127.0.0.1 → xử lý loopback riêng
+        var ip = HttpContext.Connection.RemoteIpAddress;
+        var clientIp = ip is null || IPAddress.IsLoopback(ip) ? "127.0.0.1" : ip.MapToIPv4().ToString();
         return Ok(await sender.Send(new CreatePaymentCommand(id, UserId, clientIp), cancellationToken));
     }
 
