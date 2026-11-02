@@ -21,6 +21,7 @@ public class GlobalExceptionHandler(
             NotFoundException     => (StatusCodes.Status404NotFound, "Không tìm thấy tài nguyên"),
             ConflictException     => (StatusCodes.Status409Conflict, "Xung đột tài nguyên"),
             UnauthorizedException => (StatusCodes.Status401Unauthorized, "Xác thực thất bại"),
+            ForbiddenException    => (StatusCodes.Status403Forbidden, "Không có quyền"),
             _                     => (StatusCodes.Status500InternalServerError, "Đã có lỗi xảy ra")
         };
 

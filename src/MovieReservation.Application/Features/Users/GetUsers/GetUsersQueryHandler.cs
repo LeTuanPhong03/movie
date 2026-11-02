@@ -26,7 +26,7 @@ public class GetUsersQueryHandler(IAppDbContext db) : IRequestHandler<GetUsersQu
             .OrderBy(u => u.Id)
             .Skip((request.Page - 1) * request.PageSize)
             .Take(request.PageSize)
-            .Select(u => new UserDto(u.Id, u.Email, u.FullName, u.Role.ToString()))
+            .Select(u => new UserDto(u.Id, u.Email, u.FullName, u.Role.ToString(), u.IsOwner))
             .ToListAsync(cancellationToken);
 
         return new PagedResult<UserDto>(items, request.Page, request.PageSize, totalCount);

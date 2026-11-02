@@ -35,7 +35,7 @@ public class AuthTokenIssuer(IAppDbContext db, ITokenService tokenService, TimeP
     {
         var accessToken = tokenService.GenerateAccessToken(user);
         return new AuthResponse(
-            User: new UserDto(user.Id, user.Email, user.FullName, user.Role.ToString()),
+            User: new UserDto(user.Id, user.Email, user.FullName, user.Role.ToString(), user.IsOwner),
             AccessToken: accessToken.AccessToken,
             RefreshToken: refreshToken,
             AccessTokenExpiresAt: accessToken.ExpiresAt);
