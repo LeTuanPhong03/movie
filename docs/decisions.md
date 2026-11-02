@@ -40,3 +40,36 @@
 **Sửa `DurationMinutes` → chặn (409) nếu phim còn suất chưa kết thúc (`EndAt > now`).** `Showtime.EndAt` là cột đã lưu, không tự cập nhật; để nguyên thì thực tế chồng phòng mà hệ thống không biết, tính lại thì có thể vi phạm luật không chồng giờ. Dùng `EndAt` (không phải `StartAt`) để tính cả suất đang chiếu dở; suất đã chiếu xong không ảnh hưởng nên không chặn.
 
 **Phân trang: `pageSize` sai → 400**, không âm thầm cắt về max (client không biết mình nhận ít hơn yêu cầu). Không gửi tham số thì dùng mặc định `page = 1`, `pageSize = 10`; `MaxPageSize = 50`.
+
+# 6. Bảng `ReservationSeats`: bản chụp ghế của đơn (02/11)
+
+**Vấn đề:** khi huỷ/hết hạn, ghế được nhả bằng cách đặt `ShowtimeSeat.ReservationId = null`. Nếu lịch sử đơn chỉ dựa vào `ShowtimeSeat` thì đơn Cancelled/Expired **mất luôn danh sách ghế** ("tôi đã huỷ đơn ghế nào?" không trả lời được), và báo cáo không đếm được số vé.
+
+**Quyết định:** thêm bảng `ReservationSeats(ReservationId, SeatId)`, ghi **một lần** lúc đặt, không bao giờ sửa — cùng ý tưởng với `TotalPrice` (mục 1). `ShowtimeSeat` trả lời "ghế này **bây giờ** của ai", `ReservationSeat` trả lời "đơn này **đã từng** đặt ghế nào".
+
+**Đánh đổi:** thêm một bảng và một lần INSERT mỗi ghế khi đặt (cùng một `SaveChanges`, không thêm round-trip). Đơn tạo trước migration chỉ khôi phục được ghế của đơn còn giữ/đã bán; đơn đã huỷ trước đó mất ghế vĩnh viễn (dữ liệu dev, chấp nhận).
+
+# 7. Thanh toán VNPay (02/11)
+
+**Luồng:** `POST /api/reservations/{id}/payments` tạo một dòng `Payment` (Pending, `TxnRef` = Guid) và link VNPay có chữ ký → khách trả tiền trên VNPay → VNPay gọi **IPN** (server ↔ server) và chuyển trình duyệt về **return URL**. Cả hai cùng gọi `ProcessVnPayCallbackCommand`.
+
+**Thứ tự kiểm tra trong callback:** chữ ký HMAC-SHA512 → `TxnRef` có thật → số tiền khớp `Payment.Amount` → Payment còn Pending. Chữ ký kiểm **đầu tiên** vì URL callback là public, ai cũng gọi được; chưa qua chữ ký thì không tin bất kỳ tham số nào.
+
+**Idempotent:** `UPDATE "Payments" SET Status = ... WHERE Id = @id AND Status = 'Pending'` rồi đếm số dòng — cùng kỹ thuật với Confirm/Cancel. VNPay gọi IPN nhiều lần, hoặc IPN và return URL tới cùng lúc → chỉ một bên sửa được 1 dòng, bên kia nhận "02 đã xử lý". Có test 10 IPN song song.
+
+**Trả tiền xong nhưng đơn đã hết hạn — chọn: KHÔNG kéo dài hạn giữ ghế.**
+- `vnp_ExpireDate` = `Reservation.ExpiresAt` → VNPay tự chặn thanh toán sau hạn giữ ghế, phần lớn trường hợp không xảy ra.
+- Kéo dài hạn khi bắt đầu thanh toán thì bị lạm dụng: bấm "thanh toán" liên tục để giữ ghế mãi mà không trả tiền.
+- Ca còn sót (IPN tới trễ, hoặc đơn bị huỷ đúng lúc): Payment chuyển `RefundRequired`, ghi log cảnh báo, vẫn trả VNPay "00" (đã ghi nhận, không cần gọi lại). Hoàn tiền làm tay — **Known limitation**.
+
+**Return URL cũng xử lý (không chỉ hiển thị):** chạy local không có URL public thì IPN không bao giờ tới; vì lệnh idempotent nên để return URL xử lý luôn là an toàn. Trang kết quả **không** tự đọc `vnp_ResponseCode` trên URL (ai cũng sửa được URL) mà hỏi API.
+
+**Nút confirm giả** (`POST /confirm`) chỉ bật khi `Reservations:AllowManualConfirm = true` (Development). Có thanh toán thật mà vẫn mở nút này ở production thì ai cũng xác nhận được vé không cần trả tiền.
+
+# 8. Báo cáo doanh thu (02/11)
+
+- **Chỉ tính đơn đang `Confirmed`.** Đơn Confirmed rồi bị huỷ có `Status = Cancelled` → tự rơi khỏi báo cáo (coi như hoàn tiền). Pending/Expired chưa thu đồng nào.
+- **Tiền = `TotalPrice`** (giá chụp lúc đặt), không nhân lại `Showtime.Price` hiện tại.
+- **Ngày = ngày xác nhận (`ConfirmedAt`) theo giờ Việt Nam**, tức ngày thu tiền — không phải ngày chiếu. Lọc bằng khoảng UTC `[from, to)`; nhóm theo ngày bằng `ConfirmedAt + 7 giờ` (VN không đổi giờ mùa hè nên +7 luôn đúng). Test có ca 23:59 VN và 00:00 VN rơi vào 2 ngày khác nhau.
+- `GROUP BY` chạy trong SQL, không tải từng đơn về C#. Có test đối chiếu tổng với câu SQL viết tay.
+- Khoảng tối đa 366 ngày, `From > To` → 400.
