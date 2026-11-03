@@ -142,7 +142,8 @@ public class CancelReservationTests : IAsyncLifetime
     [Fact]
     public async Task Chu_huy_don_Confirmed_thi_Cancelled_va_nha_ghe()
     {
-        var clock = TaoDongHo();
+        // 3 tiếng trước suất 18:00: vé đã trả chỉ khách tự huỷ được khi còn hơn PaidCancelCutoffMinutes (2 tiếng)
+        var clock = new FakeTimeProvider(new DateTime(2030, 1, 1, 15, 0, 0, DateTimeKind.Utc));
         var (userIds, showtimeId, showtimeSeatIds) = await SeedAsync();
         var donId = await DatGheAsync(clock, userIds[0], showtimeId, showtimeSeatIds);
         Assert.Null(await XacNhanAsync(clock, donId, userIds[0]));
