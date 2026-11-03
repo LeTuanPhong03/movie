@@ -112,11 +112,3 @@ IPN URL khai báo trên cổng merchant VNPay: `https://<app>.onrender.com/api/p
 ## Phân quyền
 
 Bảng đầy đủ: [docs/authorization.md](docs/authorization.md). Dữ liệu cá nhân kiểm chủ sở hữu trong handler, `UserId` chỉ lấy từ token; đơn của người khác trả **404** để không lộ đơn có tồn tại hay không (chống IDOR).
-
-## Known limitations / Future work
-
-- Tiền đã trừ mà đơn hết hạn (`RefundRequired`) phải **hoàn tay**; chưa gọi API hoàn tiền của VNPay.
-- Render free ngủ sau 15 phút: IPN đầu tiên có thể timeout → VNPay gọi lại (an toàn vì idempotent); return URL cũng xử lý được.
-- Tạo suất chiếu trùng giờ chỉ kiểm bằng code; hai admin tạo cùng lúc có thể lọt (cần exclusion constraint của Postgres).
-- Đổi quyền user có hiệu lực khi user lấy access token mới (tối đa 15 phút); chưa thu hồi token ngay lập tức.
-- Chưa có: ghế VIP / giá theo loại ghế, GitHub Actions, đổi mật khẩu.
