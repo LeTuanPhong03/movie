@@ -5,7 +5,7 @@ Trọng tâm: **không bao giờ bán một ghế cho hai người**, kể cả 
 
 Đề bài: [roadmap.sh — Movie Reservation System](https://roadmap.sh/projects/movie-reservation-system).
 
-**Demo:** API `https://movie-reservation-api-i1n5.onrender.com` (frontend: `<link Vercel>`) · tài khoản khách demo `demo@movie.local` / `Demo@12345`
+**Demo:** https://movie-ltp03.vercel.app · API `https://movie-reservation-api-i1n5.onrender.com` · tài khoản khách demo `demo@movie.local` / `Demo@12345`
 
 ## Stack
 
