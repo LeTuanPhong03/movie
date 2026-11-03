@@ -93,21 +93,29 @@ Mở http://localhost:5161/swagger. Lúc khởi động app tự migrate DB, t�
 dotnet test      # Testcontainers tự bật Postgres trong Docker
 ```
 
-## Deploy (Render)
+## Deploy (Render + Supabase, miễn phí)
 
-Docker image từ `Dockerfile` (multi-stage). Biến môi trường:
+API chạy trên **Render** (Docker image từ `Dockerfile` multi-stage), database là **Supabase Postgres** — Postgres free của Render bị xoá sau 30 ngày nên không dùng.
 
-| Biến | Giá trị |
-|---|---|
-| `ConnectionStrings__Default` | connection string Postgres managed |
-| `Jwt__Key`, `Admin__Password` | bí mật |
-| `VnPay__TmnCode`, `VnPay__HashSecret` | từ VNPay sandbox |
-| `VnPay__ReturnUrl` | `https://<frontend>/payment/vnpay-return` |
-| `Cors__AllowedOrigins__0` | domain frontend (chỉ cần khi gọi BE trực tiếp từ trình duyệt; FE hiện gọi qua proxy cùng domain) |
-| `Seed__Demo`, `Seed__DemoUserPassword` | `true`, `Demo@12345` |
-| `Swagger__Enabled` | `true` |
+1. **Supabase**: tạo project (region Singapore). *Connect* → **Session pooler** (IPv4; Render không gọi được kết nối trực tiếp IPv6, còn Transaction pooler làm hỏng prepared statement của Npgsql). Đổi chuỗi URI sang dạng Npgsql:
+   ```
+   Host=<host pooler>;Port=5432;Database=postgres;Username=postgres.<project-ref>;Password=<mật khẩu DB>;SSL Mode=Require;Maximum Pool Size=10
+   ```
+   Mật khẩu DB nên chỉ gồm chữ và số (ký tự `;` sẽ làm vỡ chuỗi kết nối).
+2. **Render** → Web Service từ repo GitHub (kết nối bằng tài khoản GitHub để auto-deploy khi push), Runtime Docker. Biến môi trường:
 
-IPN URL khai báo trên cổng merchant VNPay: `https://<app>.onrender.com/api/payments/vnpay/ipn`.
+   | Biến | Giá trị |
+   |---|---|
+   | `ConnectionStrings__Default` | chuỗi ở bước 1 |
+   | `Jwt__Key`, `Admin__Password` | bí mật |
+   | `VnPay__TmnCode`, `VnPay__HashSecret` | từ VNPay sandbox |
+   | `VnPay__ReturnUrl` | `https://<frontend>/payment/vnpay-return` |
+   | `Seed__Demo`, `Seed__DemoUserPassword` | `true`, `Demo@12345` |
+   | `Swagger__Enabled` | `true` |
+
+   Lần khởi động đầu app tự migrate (tạo bảng) và seed admin + dữ liệu demo.
+3. **Giữ server không ngủ**: Render free tắt service sau 15 phút không có request. Tạo job trên [cron-job.org](https://cron-job.org) gọi `GET https://<app>.onrender.com/health` mỗi 10 phút (endpoint này không đụng DB). 750 giờ free/tháng đủ cho **một** service chạy 24/7.
+4. **VNPay**: khai báo IPN URL trên cổng merchant sandbox: `https://<app>.onrender.com/api/payments/vnpay/ipn`.
 
 ## Phân quyền
 

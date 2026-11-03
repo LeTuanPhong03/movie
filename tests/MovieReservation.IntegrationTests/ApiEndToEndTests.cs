@@ -237,6 +237,14 @@ public class ApiEndToEndTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Health_tra_200_khong_can_dang_nhap()
+    {
+        var res = await (await ClientAsync()).GetAsync("/health");
+
+        Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+    }
+
+    [Fact]
     public async Task Validation_tra_400_ProblemDetails_co_danh_sach_loi()
     {
         var khach = await KhachMoiAsync("c@test.local");

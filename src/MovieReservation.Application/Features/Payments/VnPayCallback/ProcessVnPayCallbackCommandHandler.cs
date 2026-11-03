@@ -14,7 +14,6 @@ namespace MovieReservation.Application.Features.Payments.VnPayCallback;
 /// Idempotent nhờ UPDATE Payments ... WHERE Status = 'Pending': VNPay gọi lại / return URL chạy song song thì
 /// chỉ một bên sửa được 1 dòng, bên kia 0 dòng → "02". Cập nhật Payment và xác nhận đơn chung một transaction.
 /// Tiền đã trừ mà đơn không còn xác nhận được (hết hạn/huỷ đúng lúc đó) → Payment RefundRequired, vẫn trả "00"
-/// (mình đã nhận và ghi lại kết quả, VNPay không cần gọi lại nữa).
 /// </summary>
 public class ProcessVnPayCallbackCommandHandler(
     IAppDbContext db,

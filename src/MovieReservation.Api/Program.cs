@@ -105,6 +105,10 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+// Cho dịch vụ ping ngoài (cron-job.org) gọi mỗi 10 phút để Render free không ngủ. Cố ý không đụng DB:
+// ping thường xuyên mà mỗi lần mở kết nối DB là tốn tài nguyên vô ích.
+app.MapGet("/health", () => Results.Ok(new { status = "ok" })).AllowAnonymous();
+
 app.Run();
 
 // Cho integration test dùng WebApplicationFactory<Program> (top-level statements sinh class Program internal)
