@@ -63,7 +63,7 @@ public class ApiEndToEndTests : IAsyncLifetime
         {
             var res = await client.PostAsJsonAsync("/api/auth/login", new { email, password });
             res.EnsureSuccessStatusCode();
-            var auth = await res.Content.ReadFromJsonAsync<AuthResponse>(Json);
+            var auth = await res.Content.ReadFromJsonAsync<SessionResponse>(Json);
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth!.AccessToken);
         }
         return client;
@@ -75,7 +75,7 @@ public class ApiEndToEndTests : IAsyncLifetime
         var res = await client.PostAsJsonAsync("/api/auth/register",
             new { fullName = "Khach", email, password = "Khach@12345", confirmPassword = "Khach@12345" });
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);
-        var auth = await res.Content.ReadFromJsonAsync<AuthResponse>(Json);
+        var auth = await res.Content.ReadFromJsonAsync<SessionResponse>(Json);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth!.AccessToken);
         return client;
     }
