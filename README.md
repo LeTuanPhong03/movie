@@ -5,7 +5,7 @@ Trọng tâm: **không bao giờ bán một ghế cho hai người**, kể cả 
 
 Đề bài: [roadmap.sh — Movie Reservation System](https://roadmap.sh/projects/movie-reservation-system).
 
-**Demo:** `<link Render>` · Swagger: `<link Render>/swagger` · tài khoản khách demo `demo@movie.local` / `Demo@12345`
+**Demo:** API `https://movie-reservation-api-i1n5.onrender.com` (frontend: `<link Vercel>`) · tài khoản khách demo `demo@movie.local` / `Demo@12345`
 
 ## Stack
 
@@ -111,7 +111,7 @@ API chạy trên **Render** (Docker image từ `Dockerfile` multi-stage), databa
    | `VnPay__TmnCode`, `VnPay__HashSecret` | từ VNPay sandbox |
    | `VnPay__ReturnUrl` | `https://<frontend>/payment/vnpay-return` |
    | `Seed__Demo`, `Seed__DemoUserPassword` | `true`, `Demo@12345` |
-   | `Swagger__Enabled` | `true` |
+   | `Swagger__Enabled` | `true` nếu muốn mở Swagger trên production (mặc định tắt) |
 
    Lần khởi động đầu app tự migrate (tạo bảng) và seed admin + dữ liệu demo.
 3. **Giữ server không ngủ**: Render free tắt service sau 15 phút không có request. Tạo job trên [cron-job.org](https://cron-job.org) gọi `GET https://<app>.onrender.com/health` mỗi 10 phút (endpoint này không đụng DB). 750 giờ free/tháng đủ cho **một** service chạy 24/7.
