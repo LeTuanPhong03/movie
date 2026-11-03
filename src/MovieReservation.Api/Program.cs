@@ -59,14 +59,17 @@ builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
 builder.Services.AddProblemDetails(); // dịch vụ ProblemDetails (RFC 9457), UseStatusCodePages dùng để điền body lỗi
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
-// Render đứng sau proxy: IP thật của khách nằm ở header X-Forwarded-For, RemoteIpAddress chỉ là IP proxy.
-// Xoá danh sách proxy tin cậy vì không biết trước IP proxy của Render → client tự gửi header này thì giả được IP;
-// chấp nhận được vì IP chỉ dùng điền vnp_IpAddr (thông tin cho VNPay), không dùng để phân quyền hay chặn.
+// Render đứng sau nhiều tầng proxy nội bộ: X-Forwarded-For có dạng "IP-khách, 10.x.x.x", RemoteIpAddress chỉ là IP proxy.
+// Tin mọi proxy trong dải IP nội bộ và đọc header từ phải sang trái (ForwardLimit = null): bỏ qua các hop nội bộ,
+// dừng ở IP công cộng đầu tiên = khách; phần client tự chèn thêm bên trái bị bỏ qua. IP chỉ dùng điền vnp_IpAddr.
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.ForwardLimit = null;
     options.KnownIPNetworks.Clear();
     options.KnownProxies.Clear();
+    foreach (var mang in new[] { "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "127.0.0.0/8", "::1/128" })
+        options.KnownIPNetworks.Add(System.Net.IPNetwork.Parse(mang));
 });
 
 var app = builder.Build();
