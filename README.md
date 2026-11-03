@@ -64,7 +64,7 @@ Các bước đổi trạng thái sau đó (**Confirm, Cancel, job hết hạn, 
 
 ## Thanh toán VNPay
 
-`POST /api/reservations/{id}/payments` → link VNPay có chữ ký (hạn thanh toán = hạn giữ ghế) → VNPay gọi IPN `GET /api/payments/vnpay/ipn` → kiểm **chữ ký HMAC-SHA512** trước mọi thứ, rồi TxnRef, số tiền, trạng thái → xác nhận đơn **idempotent**. Trả tiền khi đơn đã hết hạn → `RefundRequired`. Chi tiết và lý do: [docs/decisions.md](docs/decisions.md) mục 7.
+`POST /api/reservations/{id}/payments` → link VNPay có chữ ký (hạn thanh toán = hạn giữ ghế) → VNPay gọi IPN `GET /api/payments/vnpay/ipn` → kiểm **chữ ký HMAC-SHA512** trước mọi thứ, rồi TxnRef, số tiền, trạng thái → xác nhận đơn **idempotent**. Đã thu tiền mà khách không còn vé (trả sau khi đơn hết hạn, hoặc huỷ vé đã trả — khách chỉ tự huỷ khi còn hơn 2 giờ) → `RefundRequired`, Admin hoàn tay rồi đánh dấu `Refunded`. Chi tiết và lý do: [docs/decisions.md](docs/decisions.md) mục 7, 9.
 
 Thẻ test sandbox: ngân hàng **NCB**, số thẻ `9704198526191432198`, tên `NGUYEN VAN A`, ngày phát hành `07/15`, OTP `123456`.
 
@@ -85,7 +85,7 @@ dotnet run --launch-profile http
 
 Mở http://localhost:5161/swagger. Lúc khởi động app tự migrate DB, tạo admin `admin@movie.local` và dữ liệu demo (suất chiếu 7 ngày tới). Ở Development có `POST /api/reservations/{id}/confirm` (xác nhận giả) để thử luồng không cần VNPay.
 
-**Frontend:** repo/folder riêng `movie-web` (Next.js) — `npm install && npm run dev` → http://localhost:3000, hướng dẫn trong README của folder đó.
+**Frontend:** repo/folder riêng `movie-fe` (Next.js) — `npm install && npm run dev` → http://localhost:3000, hướng dẫn trong README của folder đó.
 
 **Thử VNPay ở local:** đặt vé trên FE → "Thanh toán qua VNPay" → trả bằng thẻ test → VNPay chuyển về `VnPay:ReturnUrl` (Development: `http://localhost:3000/payment/vnpay-return`) → trang FE chuyển nguyên query string sang `/api/payments/vnpay/return`, API kiểm chữ ký và xác nhận đơn.
 
@@ -103,7 +103,7 @@ Docker image từ `Dockerfile` (multi-stage). Biến môi trường:
 | `Jwt__Key`, `Admin__Password` | bí mật |
 | `VnPay__TmnCode`, `VnPay__HashSecret` | từ VNPay sandbox |
 | `VnPay__ReturnUrl` | `https://<frontend>/payment/vnpay-return` |
-| `Cors__AllowedOrigins__0` | domain frontend |
+| `Cors__AllowedOrigins__0` | domain frontend (chỉ cần khi gọi BE trực tiếp từ trình duyệt; FE hiện gọi qua proxy cùng domain) |
 | `Seed__Demo`, `Seed__DemoUserPassword` | `true`, `Demo@12345` |
 | `Swagger__Enabled` | `true` |
 

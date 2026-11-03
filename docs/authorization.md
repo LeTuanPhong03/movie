@@ -9,8 +9,8 @@ Dữ liệu cá nhân (đơn đặt vé) còn một lớp nữa: **kiểm tra ch
 |---|---|---|---|
 | POST | `/api/auth/register` | Public | luôn tạo role Customer |
 | POST | `/api/auth/login` | Public | sai email/mật khẩu cùng một lỗi (chống dò email) |
-| POST | `/api/auth/refresh` | Public | refresh token là bằng chứng; rotation |
-| POST | `/api/auth/logout` | Public | xoá refresh token, idempotent (204) |
+| POST | `/api/auth/refresh` | Public | refresh token (cookie HttpOnly `movie_refresh`) là bằng chứng; rotation; thiếu cookie → 401 |
+| POST | `/api/auth/logout` | Public | xoá refresh token + xoá cookie, idempotent (204) |
 | GET | `/api/account/me` | User | |
 | GET | `/api/account/admin-only` | Admin | endpoint thử policy |
 | GET | `/api/movies`, `/api/movies/{id}` | Public | chỉ phim đang chiếu |
@@ -25,11 +25,13 @@ Dữ liệu cá nhân (đơn đặt vé) còn một lớp nữa: **kiểm tra ch
 | POST | `/api/reservations` | User | |
 | POST | `/api/reservations/{id}/payments` | User + chủ đơn | người khác → 404 |
 | POST | `/api/reservations/{id}/confirm` | User + chủ đơn | **chỉ khi** `Reservations:AllowManualConfirm=true` (dev), không thì 404 |
-| POST | `/api/reservations/{id}/cancel` | User + chủ đơn, hoặc Admin | người khác → 404; suất đã chiếu → 409 |
+| POST | `/api/reservations/{id}/cancel` | User + chủ đơn, hoặc Admin | người khác → 404; suất đã chiếu → 409; vé đã trả: khách chỉ huỷ khi còn > 2 giờ (Admin không giới hạn) |
 | GET | `/api/payments/vnpay/ipn` | Public + **chữ ký HMAC** | VNPay gọi; sai chữ ký → `97`, không đụng DB |
 | GET | `/api/payments/vnpay/return` | Public + **chữ ký HMAC** | trang kết quả gọi; idempotent với IPN |
 | GET | `/api/reports/revenue` | Admin | |
 | GET | `/api/reports/capacity?from=&to=` | Admin | ghế bán / giữ / trống từng suất |
+| GET | `/api/admin/refunds?status=` | Admin | khoản cần hoàn / đã hoàn |
+| POST | `/api/admin/refunds/{paymentId}/refunded` | Admin | đánh dấu đã hoàn tay; lần 2 → 409 |
 | GET | `/api/admin/reservations` | Admin | mọi đơn, lọc `showtimeId`, `userId`, `status` |
 | GET | `/api/users?search=` | Admin | không trả PasswordHash |
 | PUT | `/api/users/{id}/role` | Admin (+ luật Owner bên dưới) | có hiệu lực khi user lấy access token mới (≤ 15 phút) |

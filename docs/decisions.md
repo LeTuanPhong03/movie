@@ -73,3 +73,33 @@
 - **Ngày = ngày xác nhận (`ConfirmedAt`) theo giờ Việt Nam**, tức ngày thu tiền — không phải ngày chiếu. Lọc bằng khoảng UTC `[from, to)`; nhóm theo ngày bằng `ConfirmedAt + 7 giờ` (VN không đổi giờ mùa hè nên +7 luôn đúng). Test có ca 23:59 VN và 00:00 VN rơi vào 2 ngày khác nhau.
 - `GROUP BY` chạy trong SQL, không tải từng đơn về C#. Có test đối chiếu tổng với câu SQL viết tay.
 - Khoảng tối đa 366 ngày, `From > To` → 400.
+
+# 9. Huỷ vé đã thanh toán và hoàn tiền (03/11)
+
+**Lỗi phát hiện khi rà luồng thực tế:** thêm VNPay (02/11) làm "huỷ vé" đổi nghĩa — huỷ vé đã trả tiền nghĩa là nợ khách tiền — nhưng luồng Huỷ không được mở lại. Đơn Confirmed huỷ xong thì `Payment` vẫn `Succeeded`, không ai biết phải hoàn.
+
+- **Cùng một transaction với lệnh huỷ:** `UPDATE Payments SET Status='RefundRequired' WHERE ReservationId=@id AND Status='Succeeded'`. Huỷ thành công thì chắc chắn có dòng "cần hoàn"; huỷ thất bại thì không có gì đổi.
+- **Huỷ đúng lúc IPN tới** vẫn ra RefundRequired theo cả hai thứ tự: huỷ trước → IPN thấy đơn Cancelled, `TryConfirm` sửa 0 dòng → RefundRequired (đã có từ mục 7); IPN trước → đơn Confirmed + Payment Succeeded → lệnh huỷ đổi sang RefundRequired. Hai bên cùng UPDATE dòng Reservation nên DB xếp hàng, không có thứ tự thứ ba.
+- **Hạn chót huỷ vé đã trả:** khách chỉ tự huỷ khi còn hơn `Reservation.PaidCancelCutoffMinutes` (120 phút) tới giờ chiếu — rạp còn kịp bán lại ghế. Điều kiện nằm trong `WHERE` của câu huỷ (không đọc trước rồi kiểm). Đơn Pending (chưa trả) huỷ được tới giờ chiếu; **Admin** không bị giới hạn (rạp chủ động huỷ). Bị chặn → 409 nói rõ lý do.
+- **Hoàn tiền làm tay**, hệ thống chỉ ghi nhận: `RefundRequired → Refunded` (+ `RefundedAt`) bằng UPDATE có điều kiện trạng thái cũ → hai Admin bấm cùng lúc chỉ một lần được ghi nhận, người sau 409. Chưa gọi API hoàn tiền của VNPay.
+- Báo cáo doanh thu không đổi: đơn Cancelled vốn đã không được tính.
+
+# 10. Lưu token ở trình duyệt: access token trong RAM, refresh token trong cookie HttpOnly (03/11)
+
+**Trước:** FE lưu cả access lẫn refresh token trong `localStorage`. Trang dính XSS (một script độc chạy được trên domain FE) đọc được `localStorage` → lấy refresh token mang đi dùng ở máy khác suốt 7 ngày.
+
+**Chọn:**
+- **Refresh token → cookie** `movie_refresh`: `HttpOnly` (JS không đọc được), `Secure`, `SameSite=Lax` (trang web khác gửi POST sang thì trình duyệt không kèm cookie → chặn CSRF), `Path=/api/auth` (chỉ đi theo refresh/logout). Body JSON (`SessionResponse`) không còn refresh token. `/refresh` và `/logout` đọc token từ cookie, không nhận body.
+- **Access token → biến JS trong RAM.** F5 là mất → FE gọi `/refresh` lúc mở trang để lấy lại. Access token sống 15' nên lỡ bị XSS lấy được cũng hết hạn nhanh.
+- Handler không đổi: vẫn nhận chuỗi token. Đọc/ghi cookie là việc của HTTP nên nằm ở `AuthController` (`Api/Auth/RefreshTokenCookie`).
+
+**FE gọi BE qua proxy cùng domain** (Next `rewrites`: `/api/*` → BE). FE (Vercel) và BE (Render) khác site → cookie BE đặt là **cookie bên thứ ba**, Safari đã chặn và Chrome đang chặn dần; muốn gửi được còn phải `SameSite=None` (mất lớp chặn CSRF). Qua proxy thì trình duyệt chỉ thấy một domain → cookie first-party, `SameSite=Lax` dùng được, khỏi cần CORS cho FE.
+
+**Nhiều tab:** các tab dùng chung một cookie, mà rotation cho mỗi refresh token dùng đúng một lần → 2 tab F5 cùng lúc gửi cùng token, tab chậm hơn bị 401 và đăng xuất oan. FE dùng **Web Locks API** (`navigator.locks`) để các tab xếp hàng gọi `/refresh`; tab sau gửi khi trình duyệt đã ghi cookie mới.
+
+**Không chọn:**
+- *Giữ localStorage:* đơn giản nhất nhưng XSS lấy được phiên dài hạn.
+- *Cả access token cũng vào cookie (BE đọc cookie thay header Bearer):* mọi API đều chạy bằng cookie → phải chống CSRF cho mọi endpoint ghi (anti-forgery token), Swagger / client khác khó dùng.
+- *BFF (Backend-for-Frontend):* server Next giữ hết token, trình duyệt chỉ có session cookie — an toàn nhất (khuyến nghị của IETF cho ứng dụng trình duyệt) nhưng phải viết thêm tầng server lưu session; quá sức so với dự án.
+
+**Còn lại:** HttpOnly không chống được XSS *dùng* phiên ngay trên trang (script gọi API thay người dùng khi tab đang mở) — chỉ chống *mang token đi*. Chống XSS thật vẫn là không chèn HTML chưa lọc + Content-Security-Policy.
