@@ -1,13 +1,15 @@
 namespace MovieReservation.Domain.Enums;
 
 /// <summary>
-/// Trạng thái một lần thanh toán. RefundRequired: VNPay báo đã trừ tiền nhưng đơn không xác nhận được
-/// (đã hết hạn/đã huỷ đúng lúc đó) → phải hoàn tiền tay, không âm thầm nuốt tiền của khách.
+/// Trạng thái một lần thanh toán. RefundRequired: đã thu tiền nhưng khách không còn vé — VNPay trừ tiền khi đơn
+/// đã hết hạn/huỷ, hoặc khách huỷ vé đã thanh toán → phải hoàn tiền, không âm thầm nuốt tiền của khách.
+/// Refunded: Admin đã hoàn (tay, ngoài hệ thống) và đánh dấu lại.
 /// </summary>
 public enum PaymentStatus
 {
     Pending,
     Succeeded,
     Failed,
-    RefundRequired
+    RefundRequired,
+    Refunded
 }

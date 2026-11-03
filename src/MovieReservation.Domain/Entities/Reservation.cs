@@ -11,6 +11,8 @@ public class Reservation
 {
     public const int MaxSeats = 8;
     public const int HoldMinutes = 10;
+    // Vé đã thanh toán chỉ được khách tự huỷ trước giờ chiếu ít nhất chừng này (rạp kịp bán lại ghế); Admin không bị giới hạn
+    public const int PaidCancelCutoffMinutes = 120;
 
     public int Id { get; set; }
     public int UserId { get; set; }

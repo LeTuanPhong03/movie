@@ -84,6 +84,9 @@ namespace MovieReservation.Infrastructure.Persistence.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<DateTime?>("RefundedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int>("ReservationId")
                         .HasColumnType("integer");
 
